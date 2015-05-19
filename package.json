@@ -1,0 +1,22 @@
+{
+  "name": "roof-bus",
+  "version": "0.0.1",
+  "description": "roof bus library",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --compilers js:babel/register",
+    "testbus" : "mocha --compilers js:babel/register ./test/bus",
+    "testlib" : "mocha --compilers js:babel/register ./test/lib"
+  },
+  "keywords": [
+    "event"
+  ],
+  "author": "sskyy",
+  "license": "MIT",
+  "devDependencies": {
+    "babel": "^5.3.3"
+  }
+}
