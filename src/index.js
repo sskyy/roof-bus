@@ -23,14 +23,14 @@ class Bus{
 
     //注册时用的
     this._module = new Namespace
-    this._blockForWaiting = {}
+    this._blockForWaiting = new Set
     this._anonymousIndex = 0
     //
 
     //凡属要和父bus发生关连的数据都放在runtime里面
     //runtime对象会贯穿整个bus的fire过程
     this._runtime = new Runtime({
-      traceStack : {events : []},
+      stack : [],
       mute : new Facade(Map),
       data : new Facade(Tree),
       results : new Facade(Tree),
@@ -67,20 +67,24 @@ class Bus{
 
     var listenerList =  map.get(listener.event.toString())
 
-    //TODO 调整 waitFor 和 blockFor 的顺序，将所有blockFor都转换成waitFor
+    //调整 waitFor 和 blockFor 的顺序，将所有blockFor都转换成其他人的waitFor
     if( listener.blockFor ){
-      if( listenerList.has(listener.blockFor) ){
-        util.ensureArray( listener, "before", listener.blockFor)
-        //如果已经有waitFor了？
-        util.ensureArray( listenerList.get(listener.blockFor),"waitFor" ,listener.indexName)
-      }else{
-        util.ensureArray( this._blockForWaiting, listener.blockFor, listener.indexName)
+
+      for( let listenerToBlock of listener.blockFor ){
+        if( listenerList.get(listenerToBlock) ){
+          //要block的对象已经存在,那就给他增加个waitFor
+          util.ensureSet( listenerList.get(listenerToBlock),"waitFor" ,listener.indexName)
+        }else{
+          //否则加到一个等待列表里
+          util.ensureSet( this._blockForWaiting, listenerToBlock, listener.indexName)
+        }
       }
     }
 
+    //如果有监听器要block现在的监听器
     if( this._blockForWaiting[listener.indexName] ){
-      util.ensureArray( listener, "waitFor", this._blockForWaiting[listener.indexName])
-      delete this._blockForWaiting[listener.indexName]
+      util.ensureSet( listener, "waitFor", this._blockForWaiting[listener.indexName])
+      this._blockForWaiting.delete(listener.indexName)
     }
     //doneTODO 待验证
 
@@ -122,19 +126,24 @@ class Bus{
       if( !disableMap.get(listenerName) ){
         disableMap.set(listenerName,new Set)
       }
-      console.log("adding disables",{target:listenerName,source:listener.indexName,type:"listener"},fireEventName)
       disableMap.get(listenerName).add({target:listenerName,source:listener.indexName,type:"listener"})
     })
   }
   fire( eventName, ...data ){
     //fire前需要清空上一次的 runtime 数据(数据树 结果树 调用栈)
     this._runtime.reset()
-
     var event  = this.normalizeEvent(eventName)
     var listeners = !event.muteBy && this.findListenersForEvent( event.name )
 
 
-    return this.fireListeners(event, listeners )
+    //因为触发的事件可以重名，所以需要用记录stackIndex，
+    //确保后续listener的信息能放入正确的stack对象中。
+    var eventStack = this.makeEventStack( event, listeners)
+    this._runtime.stack.push( eventStack )
+    event._stackIndex = eventStack.index
+
+
+    return this.fireListeners( event, listeners )
 
 
     //TODO 根据触发条件{mute,disable,target}，依次触发监听器,如果监听器有 waitFor 选项，则将其加入到 waitFor 对象的 promise 中
@@ -186,7 +195,6 @@ class Bus{
       }
       //如果在触发时要禁用后代中的事件
       fireEvent.mute && this.storeRuntimeMute( fireEvent.mute)
-
 
 
       //如果触发时要禁用监听器
@@ -274,68 +282,165 @@ class Bus{
   }
   fireListeners( event, listeners ){
     //TODO 依次触发，通过 snapshot 连接 traceStack, runtime
-    console.log("fire======",event.name,"listeners:")
-    //print( listeners.toArray())
-    //console.log("muted by")
-    //print( event.muteBy)
-    //console.log("========")
 
+    //对错误的处理问题参见:https://docs.google.com/document/d/1UW9Lci7KpvPNXLG7n5v_SIEQQOQzIwtHIos44Fl020s/edit?usp=sharing
+
+    //console.log("fire======",event.name,"listeners:")
+    //print( listeners.toArray())
     //console.log( event.disable,[...this._disable.get(event.name).keys()])
 
-    return new Promise((resolve,reject)=>{
-      if( !event.muteBy ) {
-        listeners.forEachAsync((listener, next)=> {
-          //target 和 disable 可以共存
-          if( event.target && !event.target.has(listener.indexName) ) return next()
-          if( event.disable && event.disable.get(listener.indexName) ) return next()
+    var firePromise = new Promise((resolve,reject)=>{
+      if( event.muteBy ){
+        return setTimeout(resolve, 1)
+      }
 
-          var snapshot = this.snapshot()
-          var result = listener.fn.call(snapshot)
-          if( result instanceof BusResult ){
-            //动态处理mute
-            if( result.signal.mute ){
-              snapshot.storeRuntimeMute([].concat(result.signal.mute).map((muteName)=>{
-                return {target:muteName,source:listener.indexName,type:"call"}
-              }))
+      //OrderedList 已经禁止了重名，所以一个event下的listener是不会重名的
+      //只记录当前监听器循环中的执行阶段的错误
+      //异步阶段的错误在 result 中返回，除非开发者没有return相应的promise
+      var results = {}
+
+
+      listeners.forEachAsync((listener, next)=> {
+        //target 和 disable 可以共存
+        if( event.target && !event.target.has(listener.indexName) ) return next()
+        if( event.disable && event.disable.get(listener.indexName) ) return next()
+
+
+        var snapshot = this.snapshot(event, listener)
+        //处理监听器的 waitFor
+
+        var result
+        if( listener.waitFor){
+          //console.log("calling listener",listener.indexName, listener.waitFor)
+          //如果waitFor的监听器返回的时promise，那么就等其resolve,
+          //并且把自己的结果也包装成Promise，这样可以继续让其他监听器waitFor
+
+          let promiseToWait = [...listener.waitFor].reduce((list,waitForName)=>{
+            if( results[waitForName].data instanceof Promise){
+              list.push( results[waitForName].data )
             }
+            return list
+          },[])
 
-            //动态处理disable
-            if( result.signal.disable ){
-              let disableNames = [].concat(result.signal.disable)
-              disableNames.forEach((disableName)=>{
-                if( !event.disable.get(disableName) ) event.disable.set(disableName, new Set)
-                event.disable.get(disableName).add({target:disableName,source:listener.indexName,type:"call"})
-              })
-            }
+          result = this.parseResult( Promise.all(promiseToWait).then(()=>{
+            return listener.fn.call(snapshot)
+            //这里只能在stackTrace里面做记录，因为promise已经是执行的第二阶段了。
+            //throw err 没有用。
+          //}).catch(err=>{
+          //  throw err
+          }))
 
-            //TODO 动态处理blockFor
+        }else{
+          //console.log("calling none waitFor listener",listener.indexName, listener.waitFor)
+          try{
+            result = this.parseResult( listener.fn.call(snapshot) )
+          }catch(e){
+            //任何执行时的错误，可以打断当前的监听器执行循环，并使当前promise reject
+            //错误也扔到 results中，之后用来收集到 stack里
+            let error = new BusError(500,e)
+            results[listener.indexName] = this.parseResult( error, {})
+            return next(error)
           }
 
-          next()
-        }, function allDone() {
-          setTimeout(resolve, 1)
+          if( result.data instanceof BusError ){
+            results[listener.indexName] = result
+            return next(result.data)
+          }
+        }
+
+        //如果返回 BusError，则也认为是执行期错误。
+
+
+        //暂存一下，后面的waitFor需要用
+        results[listener.indexName] = result
+
+        //console.log( `result of ${listener.indexName}`,result,result instanceof BusResult )
+
+        //动态处理mute
+        if( result.signal.mute ){
+          //这里一定要把 mute 放到当前的runtime里面，而不是snapshot。
+          //动态mute一定要和order一起使用，应为动态的mute只对后续触发的listener中的子孙事件有效。
+          this.storeRuntimeMute([].concat(result.signal.mute).map((muteName)=>{
+            return {target:muteName,source:listener.indexName,type:"call"}
+          }))
+        }
+
+        //动态处理disable
+        if( result.signal.disable !== undefined ){
+          if( !event.disable ) event.disable = new Map
+          let disableNames = [].concat(result.signal.disable)
+          disableNames.forEach((disableName)=>{
+            if( !event.disable.get(disableName) ) event.disable.set(disableName, new Set)
+            event.disable.get(disableName).add({target:disableName,source:listener.indexName,type:"call"})
+          })
+        }
+
+         //动态处理blockFor
+        if( result.signal.blockFor ){
+          [].concat(result.signal.blockFor).forEach(blockForName=>{
+            //console.log("blocking",blockForName)
+            var listenerToBlock = listeners.get(blockForName)
+            if( listenerToBlock ){
+              if( !listenerToBlock.waitFor ) listenerToBlock.waitFor = new Set
+              listenerToBlock.waitFor.add( listener.indexName )
+              //console.log("listener to block updated", listenerToBlock, [...listenerToBlock.waitFor])
+            }else{
+              console.warn("listener not called in this event", blockForName)
+            }
+          })
+        }
+
+        next()
+      }, function allDone(err) {
+        //console.log("fire done",event.name)
+        if( err ){
+          if( !(err instanceof BusError)){
+            err = new BusError(500, err)
+          }
+        }
+
+        //都执行完之后，先将results数据并入到stack里面
+        _.forEach(results,(result,listenerIndexName)=>{
+          this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
         })
-      }else{
-        setTimeout(resolve, 1)
-      }
+
+        //任何执行器的错误，打断当前循环，并且使promise reject
+        if(err) return reject( err )
+
+        //当所有监听器的第二阶段也执行完之后，再决定当前的promise是resolve还是reject
+        Promise.all( Object.values(results).map(result=>{return result.data}) ).then(resolve).catch(reject)
+      }.bind(this))
     })
+
+    return firePromise
   }
-  snapshot(){
-    var snapshot = {}
+  parseResult( result ){
+    if( result instanceof BusResult ) return result
+
+    return this.result(result,{})
+  }
+  snapshot(event, listener){
+    var snapshot = {_isSnapshot:true}
     _.extend(snapshot, _.clone(this))
 
     snapshot.__proto__ = this.__proto__
 
-    var muteClone = new Map([...this._runtime.mute].map(([k,v])=>{
+    var liftedMuteClone = new Map([...this._runtime.mute].map(([k,v])=>{
        v.clone().lift()
       return [k,v]
     }))
 
 
+    //对当前的listener创建一个新的stack，用来记录其中触发的event
+    //console.log( Object.keys(this._runtime.stack[event._stackIndex].listeners), listener.indexName)
+    //console.log(listener.indexName, this._runtime.stack[event._stackIndex].listeners[listener.indexName])
+    this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack = []
+
+    //搞定 traceStack
     snapshot._runtime = {
       reset : ()=>{},
-      mute : muteClone
-      //TODO 搞定 traceStack
+      mute : liftedMuteClone,
+      stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack
     }
 
     return snapshot
@@ -352,17 +457,39 @@ class Bus{
   catch( fn ){
     //当前对象中又触发器，并触发了错误
   }
-  result( result, signal ){
+  result( data, signal={} ){
     if( arguments.length ==1 ){
-      [signal , result] = [result, undefined]
+      signal = data
+      data = undefined
     }
-    return new BusError( result, signal)
+    return new BusResult( data, signal)
   }
   error( code, data ){
     return new BusError( code, data)
   }
   getRegisteredEvents(){
 
+  }
+  makeEventStack(event, listenersOrderedList ){
+    var eventStack = {}
+    eventStack.event = _.cloneDeep(event)
+
+    var clonedListenerArray =  _.cloneDeep(listenersOrderedList.toArray(), (item)=>{
+      if( item instanceof Set ){
+        return [...item]
+      }else if( item instanceof Map){
+        return _.zipObject( [...item.keys()],[...item.values()])
+      }else if( item instanceof Function){
+        return `[Function ${item.name}]`
+      }
+    })
+
+    eventStack.listeners = _.zipObject( clonedListenerArray.map(listener=>{
+      return listener.indexName
+    }), clonedListenerArray)
+
+    eventStack.index = this._runtime.stack.length
+    return eventStack
   }
   normalizeListener(eventName, listener){
     listener = _.isFunction(listener) ? { fn : listener} : listener
@@ -379,6 +506,32 @@ class Bus{
       }
     }
 
+    if( listener.before ){
+      listener.before = new Set([].concat(listener.before))
+    }
+
+    if( listener.after ){
+      listener.after = new Set([].concat(listener.after))
+    }
+
+    if( listener.blockFor ){
+      listener.blockFor = new Set( [].concat( listener.blockFor))
+
+      if( !listener.before ) listener.before = new Set
+      for( let blockForName of listener.blockFor ){
+        listener.before.add(blockForName)
+      }
+    }
+
+    if( listener.waitFor ){
+      listener.waitFor = new Set( [].concat( listener.waitFor))
+
+      if( !listener.after ) listener.after = new Set
+      for( let waitForName of listener.waitFor ){
+        listener.after.add(waitForName)
+      }
+    }
+
     if( !listener.name ){
       listener.name = listener.fn.name || this.anonymousName()
     }
@@ -390,16 +543,28 @@ class Bus{
 }
 
 class BusResult{
-  constructor( result, signal){
-    this.result = result
+  constructor( data, signal){
+    this.$class = (data===null || data===undefined) ? data : data.constructor.name
+    this.data = data
     this.signal = signal
   }
 }
 
 class BusError{
-  constructor( code, error ){
+  constructor( code, data ){
     this.code = code
-    this.error = error
+    if( data instanceof Error){
+      this.data = {message : data.message }
+      this.stack = data.stack
+    }else{
+      this.data = data
+      //去掉没用的两个stack
+      let stackArray = new Error().stack.split(/\n/)
+      this.stack = stackArray.slice(0,1).concat(stackArray.slice(3)).join("\n")
+    }
+
+    this.$class = data.constructor.name
+    this.origin  = data
   }
 }
 

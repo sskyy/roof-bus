@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "mocha --compilers js:babel/register",
-    "testbus" : "mocha --compilers js:babel/register ./test/bus",
-    "testlib" : "mocha --compilers js:babel/register ./test/lib"
+    "testbus": "mocha --compilers js:babel/register ./test/bus",
+    "testlib": "mocha --compilers js:babel/register ./test/lib"
   },
   "keywords": [
     "event"
@@ -17,6 +17,7 @@
   "author": "sskyy",
   "license": "MIT",
   "devDependencies": {
-    "babel": "^5.3.3"
+    "babel": "^5.3.3",
+    "prettyjson": "~1.1.1"
   }
 }

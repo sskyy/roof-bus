@@ -129,5 +129,17 @@ function ensureArray(obj,key,value){
   }
 }
 
-export default {isPromiseAlike,mergeDefaults,mergeDeep,getRef,setRef, insertListener, findIndex,ensureArray}
+function ensureSet(obj,key,value){
+  if( value instanceof  Set){
+    value = [...value]
+  }
+
+  if( obj[key] === undefined ){
+    obj[key] = new Set([].concat(value))
+  }else{
+    obj[key] = new Set([...obj[key]].concat(value))
+  }
+}
+
+export default {isPromiseAlike,mergeDefaults,mergeDeep,getRef,setRef, insertListener, findIndex,ensureArray,ensureSet}
 

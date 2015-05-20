@@ -116,7 +116,7 @@ describe("listener fire mute",()=>{
   })
 
 
-  it("fire as expect", ()=>{
+  it("fire as expect", (done)=>{
     bus.on( event, function firstListener( eventArg ){})
 
     bus.on( event,{
@@ -141,25 +141,36 @@ describe("listener fire mute",()=>{
     })
 
     bus.on( descendantEvent, function descendantListener(){})
+    done()
   })
 
-  it("mute on the run",()=>{
+  it("mute on the run",(done)=>{
     var childFired = false
     var descendantFired = false
 
     bus.on( event,{
-      fn:function thirdListener( ){
-        this.fire(childEvent)
+      fn:function FirstListener( ){
+        //无法使用signal mute自己先fire的的事件,只能mute后面触发的子孙
+        //this.fire(childEvent)
+        return this.result({
+          mute : descendantEvent
+        })
       },
       first: true,
     })
 
+    bus.on( event, function SecondListener(){
+      this.fire(childEvent)
+    })
+
     bus.on( childEvent,function childEventListener(  ){
       childFired = true
+      //console.log(childFired,"fired")
       this.fire(descendantEvent)
     })
 
     bus.on( descendantEvent, function descendantListener(){
+      //console.log(descendantEvent,"fired")
       descendantFired = true
     })
 
@@ -167,9 +178,9 @@ describe("listener fire mute",()=>{
       assert.equal(childFired,true)
       assert.equal(descendantFired,false)
       done()
-    }).catch((...arg)=>{
-      console.log(arg)
-      done(arg)
+    }).catch((err)=>{
+      console.log("something run! ==>",err)
+      done(err)
     })
   })
 })

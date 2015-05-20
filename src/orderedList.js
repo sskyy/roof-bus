@@ -31,8 +31,8 @@ class OrderedList {
     var normalizedOrder = {}
     if( order.first) normalizedOrder.first = true
     if( order.last) normalizedOrder.last = true
-    if( order.before ) normalizedOrder.before = new Set( [].concat(order.before) )
-    if( order.after ) normalizedOrder.after = new Set( [].concat(order.after) )
+    if( order.before ) normalizedOrder.before = new Set( [].concat([...order.before]) )
+    if( order.after ) normalizedOrder.after = new Set( [].concat([...order.after]) )
 
     if( (normalizedOrder.first || normalizedOrder.last) && (normalizedOrder.before||normalizedOrder.after) ){
       throw new Error("order `first` and `last` cannot be used with `before` or `after` : "+ key)
@@ -63,6 +63,9 @@ class OrderedList {
 
     return normalizedOrder
   }
+  /*
+  order 中的before 或者after必须是 数组或者 Set
+   */
   insert(key, value, order={}) {
     //TODO before he after 都支持数组形式，对插入的数据使用index来
     if( _.isUndefined(key) || _.isUndefined(value) ) throw new Error("key and value cannot be undefined")
@@ -213,12 +216,12 @@ class OrderedList {
   }
   get(key) {
     if (this._list.get(key) ){
-      return this._list.get(key)
+      return this._list.get(key).value
     } else {
       for (let list of this._waitList.values()) {
         for( let obj of list.values())
         if (obj.key === key) {
-          return obj
+          return obj.value
         }
       }
     }
@@ -251,17 +254,18 @@ class OrderedList {
 
     function next(i, err) {
       if (err) {
-        console.log(err)
+        //console.log(err)
         return callback(err)
       }
 
-      try {
-        i ? handler(i.value, next.bind(root, i.next)) : callback()
-      } catch (e) {
-        callback(e)
-      }
+      i ? handler(i.value, next.bind(root, i.next)) : callback()
     }
-    next(root.head)
+
+    try{
+      next(root.head)
+    }catch(e){
+      callback(e)
+    }
   }
 }
 

@@ -87,4 +87,37 @@ describe("listener fire mute",()=>{
     })
   })
 
+
+  it("disable on the run", (done)=>{
+    var result = []
+    bus.on( event, function firstListener(){
+      result.push(1)
+    })
+
+    bus.on( event,{
+      fn:function secondListener(){
+        result.push(2)
+      },
+      before : "firstListener"
+    })
+
+    bus.on( event,{
+      fn:function thirdListener( ){
+        result.push(3)
+        return this.result({
+          disable : "firstListener"
+        })
+      },
+      first: true
+    })
+
+    bus.fire(event).then(()=>{
+      assert.equal(result.join(""),"32")
+      done()
+    }).catch((err)=>{
+      console.log(err)
+      done(err)
+    })
+  })
+
 })

@@ -23,6 +23,8 @@ describe("add listener and fire",()=>{
       first: true
     })
 
+    console.log( [...bus._eventListenerMap.get(event)._list.entries()] )
+    console.log( [...bus._eventListenerMap.get(event)._waitList] )
     var rawListenerList = bus.getListenersFor(event).toArray()
 
     assert.equal(rawListenerList.length, 3)

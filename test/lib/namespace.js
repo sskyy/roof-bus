@@ -1,5 +1,5 @@
 import assert from "assert"
-import Namespace from "../src/namespace.js"
+import Namespace from "../../src/namespace.js"
 
 describe("string extend test", ()=>{
 

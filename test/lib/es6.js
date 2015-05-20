@@ -1,7 +1,7 @@
 import assert from "assert"
 
 describe("promise test", ()=>{
-  return
+  //return
   var result = "promise resolved"
   var p1 = new Promise(function(resolve, reject){
     setTimeout(function(){
@@ -14,5 +14,41 @@ describe("promise test", ()=>{
       assert.equal( result, res)
       done()
     })
+  })
+
+  it("error",(done)=>{
+    var error = new Error("aaaa")
+    new Promise((resolve,reject)=>{
+        throw error
+      }).catch(e=>{
+        assert.equal(e, error)
+      done()
+    })
+
+    //done("should not done here")
+  })
+
+  it("error reject",(done)=>{
+    var error = new Error("aaaa")
+    var promise = new Promise((resolve,reject)=>{
+      reject( error)
+    })
+
+    promise.catch(e=>{
+      assert.equal(e, error)
+      done()
+    })
+  })
+
+  it("Map order",()=>{
+    var map = new Map
+    var items = [3,1,2,"c","a","b"]
+
+    items.forEach((item)=>{
+      map.set(item.toString(),item)
+    })
+
+    assert.equal( [...map.keys()].join(""), items.map(item=>{return item.toString()}).join("") )
+    assert.equal( [...map.values()].join(""), items.map(item=>{return item.toString()}).join("") )
   })
 })
