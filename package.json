@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --compilers js:babel/register",
+    "test": "mocha --compilers js:babel/register ./test/*",
     "testbus": "mocha --compilers js:babel/register ./test/bus",
     "testlib": "mocha --compilers js:babel/register ./test/lib"
   },

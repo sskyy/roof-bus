@@ -4,18 +4,13 @@ import Namespace from "./namespace.js"
 import Tree from "./tree.js"
 import OrderedList from "./orderedList.js"
 import {Runtime, Facade} from "./runtime.js"
+import Data from "./data"
 
-
-import prettyjson from "prettyjson"
-var print = function( obj ){
-  console.log( prettyjson.render(obj))
-}
 
 class Bus{
   constructor(options={defaultModule:"_system"}){
     this.options = options
 
-    //this._eventTree = new Tree
     this._mute = new Map
     this._disable = new Map
     this._eventListenerMap = new Map
@@ -32,7 +27,7 @@ class Bus{
     this._runtime = new Runtime({
       stack : [],
       mute : new Facade(Map),
-      data : new Facade(Tree),
+      data : new Facade(Data),
       results : new Facade(Tree),
       errors : []
     })
@@ -135,6 +130,8 @@ class Bus{
     var event  = this.normalizeEvent(eventName)
     var listeners = !event.muteBy && this.findListenersForEvent( event.name )
 
+    //处理数据
+    this._runtime.data = this._runtime.data.child()
 
     //因为触发的事件可以重名，所以需要用记录stackIndex，
     //确保后续listener的信息能放入正确的stack对象中。
@@ -143,35 +140,21 @@ class Bus{
     event._stackIndex = eventStack.index
 
 
+    //根据触发条件{mute,disable,target}，依次触发监听器,如果监听器有 waitFor 选项，则将其加入到 waitFor 对象的 promise 中
+
+    //获取监听器返回值
+    // 如果返回非 bus.signal, 则继续执行。
+    // 如果返回 bus.signal包装过的结果，如果结果是 promise，并且blockFor为all，则暂停遍历。
+    // 如果没有结果或者是普通结果， signal{mute,disable,blockFor}, 则动态改变后面的触发条件
+
+    // 如果返回 error, 则立即跳出整个 触发栈
+    // 如果返回的是普通的对象，则构建结果树(不是数据树！)
+
+    // 冲突情况: 异步的 waitFor 中返回的结果无法 block 任何
     return this.fireListeners( event, listeners )
 
-
-    //TODO 根据触发条件{mute,disable,target}，依次触发监听器,如果监听器有 waitFor 选项，则将其加入到 waitFor 对象的 promise 中
-
-      //TODO 获取监听器返回值
-      // 如果返回非 bus.signal, 则继续执行。
-      // 如果返回 bus.signal包装过的结果，如果结果是 promise，并且blockFor为all，则暂停遍历。
-      // 如果没有结果或者是普通结果， signal{mute,disable,blockFor}, 则动态改变后面的触发条件
-
-      // 如果返回 error, 则立即跳出整个 触发栈
-      // 如果返回的是普通的对象，则构建结果树(不是数据树！)
-
-      // 冲突情况: 异步的 waitFor 中返回的结果无法 block 任何
   }
   normalizeEvent( rawEvent ){
-
-
-    //TODO 两种disable触发来源
-    /*
-    1. 注册时的listener带的disable
-    2. 触发事件时带的disable
-     */
-
-    //TODO 两种target触发来源
-    /*
-    1. 注册时的target
-    2. 触发时的target
-     */
 
     var fireEvent = _.isString(rawEvent) ? {name : rawEvent} : rawEvent
     fireEvent.muteBy = this.getMuteFor( fireEvent.name )
@@ -281,12 +264,11 @@ class Bus{
     return listeners
   }
   fireListeners( event, listeners ){
-    //TODO 依次触发，通过 snapshot 连接 traceStack, runtime
+    //依次触发，通过 snapshot 连接 traceStack, runtime
 
     //对错误的处理问题参见:https://docs.google.com/document/d/1UW9Lci7KpvPNXLG7n5v_SIEQQOQzIwtHIos44Fl020s/edit?usp=sharing
 
     //console.log("fire======",event.name,"listeners:")
-    //print( listeners.toArray())
     //console.log( event.disable,[...this._disable.get(event.name).keys()])
 
     var firePromise = new Promise((resolve,reject)=>{
@@ -436,17 +418,18 @@ class Bus{
     //console.log(listener.indexName, this._runtime.stack[event._stackIndex].listeners[listener.indexName])
     this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack = []
 
-    //搞定 traceStack
+    //注意 snapshot 时是不用调用data.child()的，因为同级snapshot共享数据
     snapshot._runtime = {
       reset : ()=>{},
       mute : liftedMuteClone,
+      data : this._runtime.data,
       stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack
     }
 
     return snapshot
   }
-  data( path, data){
-
+  get data(){
+    return this._runtime.data
   }
   fcall( event, listener ){
 
@@ -455,7 +438,7 @@ class Bus{
     //当前对象中没有正在触发的监听器
   }
   catch( fn ){
-    //当前对象中又触发器，并触发了错误
+    //当前对象中有触发器，并触发了错误
   }
   result( data, signal={} ){
     if( arguments.length ==1 ){
