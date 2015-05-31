@@ -151,7 +151,7 @@ class Bus{
     // 如果返回的是普通的对象，则构建结果树(不是数据树！)
 
     // 冲突情况: 异步的 waitFor 中返回的结果无法 block 任何
-    return this.fireListeners( event, listeners )
+    return this.fireListeners( event, listeners, data )
 
   }
   normalizeEvent( rawEvent ){
@@ -263,7 +263,7 @@ class Bus{
 
     return listeners
   }
-  fireListeners( event, listeners ){
+  fireListeners( event, listeners, data ){
     //依次触发，通过 snapshot 连接 traceStack, runtime
 
     //对错误的处理问题参见:https://docs.google.com/document/d/1UW9Lci7KpvPNXLG7n5v_SIEQQOQzIwtHIos44Fl020s/edit?usp=sharing
@@ -305,7 +305,7 @@ class Bus{
           },[])
 
           result = this.parseResult( Promise.all(promiseToWait).then(()=>{
-            return listener.fn.call(snapshot)
+            return listener.fn.call(snapshot, ...data)
             //这里只能在stackTrace里面做记录，因为promise已经是执行的第二阶段了。
             //throw err 没有用。
           //}).catch(err=>{

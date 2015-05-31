@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "mocha --compilers js:babel/register ./test/*",
+    "testone": "mocha --compilers js:babel/register",
     "testbus": "mocha --compilers js:babel/register ./test/bus",
     "testlib": "mocha --compilers js:babel/register ./test/lib"
   },
@@ -18,6 +19,10 @@
   "license": "MIT",
   "devDependencies": {
     "babel": "^5.3.3",
+    "mocha": "^2.2.5",
     "prettyjson": "~1.1.1"
+  },
+  "dependencies": {
+    "lodash": "^3.9.1"
   }
 }

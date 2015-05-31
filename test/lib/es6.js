@@ -51,4 +51,18 @@ describe("promise test", ()=>{
     assert.equal( [...map.keys()].join(""), items.map(item=>{return item.toString()}).join("") )
     assert.equal( [...map.values()].join(""), items.map(item=>{return item.toString()}).join("") )
   })
+
+  it("Promise values",()=>{
+    var data = {name:"jason"}
+    var promise = new Promise((resolve,reject)=>{
+      resolve(data)
+    })
+
+    promise.then((resolvedData)=>{
+      assert.equal( resolvedData, data)
+      //Object.assign(promise,data)
+      console.log( promise)
+    })
+
+  })
 })
