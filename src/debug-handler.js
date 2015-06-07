@@ -1,4 +1,4 @@
-import {BusError} from "./index.js"
+import BusError from "./error.js"
 
 function redConsole( format, ...args){
     console.log("%c"+format, "color:red", ...args)

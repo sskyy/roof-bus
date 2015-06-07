@@ -1,6 +1,6 @@
 {
   "name": "roof-bus",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "roof bus library",
   "main": "index.js",
   "directories": {
@@ -28,6 +28,7 @@
     "webpack-dev-server": "~1.9.0"
   },
   "dependencies": {
+    "babel": "~5.5.4",
     "lodash": "^3.9.1"
   }
 }

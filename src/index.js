@@ -4,7 +4,8 @@ import Namespace from "./namespace.js"
 import Tree from "./tree.js"
 import OrderedList from "./orderedList.js"
 import {Runtime, Facade} from "./runtime.js"
-import Data from "./data"
+import Data from "./data.js"
+import BusError from "./error.js"
 import Debug from "./debug.js"
 import debugHandler from "./debug-handler.js"
 
@@ -304,10 +305,13 @@ export default class Bus{
           let promiseToWait = [...listener.waitFor].reduce((list,waitForName)=>{
             if( results[waitForName].data instanceof Promise){
               list.push( results[waitForName].data )
+            }else{
+              debug.warn(waitForName,"result is not a promise",results[waitForName])
             }
             return list
           },[])
 
+          debug.log(listener.indexName,"must wait for", listener.waitFor, promiseToWait.length)
           //并且把自己的结果也包装成Promise，这样可以继续让其他监听器waitFor
           result = this.parseResult( Promise.all(promiseToWait).then(()=>{
             return listener.fn.call(snapshot, ...data)
@@ -558,29 +562,6 @@ class BusResult{
     this.$class = (data===null || data===undefined) ? data : data.constructor.name
     this.data = data
     this.signal = signal
-  }
-}
-
-export class BusError{
-  constructor( code, data ){
-    if(! _.isNumber(code) ){
-      data = code
-      code = 500
-    }
-
-    this.code = code
-    if( data instanceof Error){
-      this.data = {message : data.message }
-      this.stack = data.stack.split(/\n/)
-    }else{
-      this.data = data
-      //去掉没用的两个stack
-      let stackArray = new Error().stack.split(/\n/)
-      this.stack = stackArray.slice(0,1).concat(stackArray.slice(3))
-    }
-
-    this.$class = data.constructor.name
-    this.origin  = data
   }
 }
 

@@ -186,7 +186,6 @@ describe("error test",()=>{
       done("should not fire")
     }).catch((err)=>{
       try{
-        console.log( err.stack)
         assert.equal( result.join(""), "34521")
         assert.equal(err.data, errorData)
         assert.equal(err.code, errorCode)
