@@ -5,9 +5,14 @@ import Tree from "./tree.js"
 import OrderedList from "./orderedList.js"
 import {Runtime, Facade} from "./runtime.js"
 import Data from "./data"
+import Debug from "./debug.js"
+import debugHandler from "./debug-handler.js"
+
+//由环境变量决定debug level
+var debug = new Debug( null, debugHandler)
 
 
-class Bus{
+export default class Bus{
   constructor(options={defaultModule:"_system"}){
     this.options = options
 
@@ -128,7 +133,7 @@ class Bus{
     //fire前需要清空上一次的 runtime 数据(数据树 结果树 调用栈)
     this._runtime.reset()
     var event  = this.normalizeEvent(eventName)
-    var listeners = !event.muteBy && this.findListenersForEvent( event.name )
+    var listeners =  this.findListenersForEvent( event.name )
 
     //处理数据
     this._runtime.data = this._runtime.data.child()
@@ -268,8 +273,8 @@ class Bus{
 
     //对错误的处理问题参见:https://docs.google.com/document/d/1UW9Lci7KpvPNXLG7n5v_SIEQQOQzIwtHIos44Fl020s/edit?usp=sharing
 
-    //console.log("fire======",event.name,"listeners:")
-    //console.log( event.disable,[...this._disable.get(event.name).keys()])
+    //debug.log("fire======",event.name,"listeners:")
+    //debug.log( event.disable,[...this._disable.get(event.name).keys()])
 
     var firePromise = new Promise((resolve,reject)=>{
       if( event.muteBy ){
@@ -293,9 +298,8 @@ class Bus{
 
         var result
         if( listener.waitFor){
-          //console.log("calling listener",listener.indexName, listener.waitFor)
-          //如果waitFor的监听器返回的时promise，那么就等其resolve,
-          //并且把自己的结果也包装成Promise，这样可以继续让其他监听器waitFor
+          //debug.log("calling listener",listener.indexName, listener.waitFor)
+          //如果waitFor的监听器返回的是promise，那么就等其resolve,
 
           let promiseToWait = [...listener.waitFor].reduce((list,waitForName)=>{
             if( results[waitForName].data instanceof Promise){
@@ -304,6 +308,7 @@ class Bus{
             return list
           },[])
 
+          //并且把自己的结果也包装成Promise，这样可以继续让其他监听器waitFor
           result = this.parseResult( Promise.all(promiseToWait).then(()=>{
             return listener.fn.call(snapshot, ...data)
             //这里只能在stackTrace里面做记录，因为promise已经是执行的第二阶段了。
@@ -313,9 +318,9 @@ class Bus{
           }))
 
         }else{
-          //console.log("calling none waitFor listener",listener.indexName, listener.waitFor)
+          //debug.log("calling none waitFor listener",listener.indexName, listener.waitFor)
           try{
-            result = this.parseResult( listener.fn.call(snapshot) )
+            result = this.parseResult( listener.fn.call(snapshot, ...data) )
           }catch(e){
             //任何执行时的错误，可以打断当前的监听器执行循环，并使当前promise reject
             //错误也扔到 results中，之后用来收集到 stack里
@@ -336,7 +341,7 @@ class Bus{
         //暂存一下，后面的waitFor需要用
         results[listener.indexName] = result
 
-        //console.log( `result of ${listener.indexName}`,result,result instanceof BusResult )
+        //debug.log( `result of ${listener.indexName}`,result,result instanceof BusResult )
 
         //动态处理mute
         if( result.signal.mute ){
@@ -360,21 +365,33 @@ class Bus{
          //动态处理blockFor
         if( result.signal.blockFor ){
           [].concat(result.signal.blockFor).forEach(blockForName=>{
-            //console.log("blocking",blockForName)
+            //debug.log("blocking",blockForName)
             var listenerToBlock = listeners.get(blockForName)
             if( listenerToBlock ){
               if( !listenerToBlock.waitFor ) listenerToBlock.waitFor = new Set
               listenerToBlock.waitFor.add( listener.indexName )
-              //console.log("listener to block updated", listenerToBlock, [...listenerToBlock.waitFor])
+              //debug.log("listener to block updated", listenerToBlock, [...listenerToBlock.waitFor])
             }else{
               console.warn("listener not called in this event", blockForName)
             }
           })
         }
 
+        //处理snapshot的destroy
+        if( result.data && result.data instanceof  Promise){
+          result.data.then(()=>{
+            snapshot.destroy()
+          }).catch(function(e){
+            snapshot.destroy()
+            throw e
+          })
+        }else{
+          snapshot.destroy()
+        }
+
         next()
       }, function allDone(err) {
-        //console.log("fire done",event.name)
+        //debug.log("fire done",event.name)
         if( err ){
           if( !(err instanceof BusError)){
             err = new BusError(500, err)
@@ -386,8 +403,11 @@ class Bus{
           this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
         })
 
-        //任何执行器的错误，打断当前循环，并且使promise reject
-        if(err) return reject( err )
+        //任何执行期的错误，打断当前循环，并且使promise reject
+        if(err){
+          debug.error( err )
+          return reject( err )
+        }
 
         //当所有监听器的第二阶段也执行完之后，再决定当前的promise是resolve还是reject
         Promise.all( Object.values(results).map(result=>{return result.data}) ).then(resolve).catch(reject)
@@ -414,16 +434,24 @@ class Bus{
 
 
     //对当前的listener创建一个新的stack，用来记录其中触发的event
-    //console.log( Object.keys(this._runtime.stack[event._stackIndex].listeners), listener.indexName)
-    //console.log(listener.indexName, this._runtime.stack[event._stackIndex].listeners[listener.indexName])
+    //debug.log( Object.keys(this._runtime.stack[event._stackIndex].listeners), listener.indexName)
+    //debug.log(listener.indexName, this._runtime.stack[event._stackIndex].listeners[listener.indexName])
     this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack = []
 
     //注意 snapshot 时是不用调用data.child()的，因为同级snapshot共享数据
     snapshot._runtime = {
-      reset : ()=>{},
+      reset : _.noop,
       mute : liftedMuteClone,
       data : this._runtime.data,
-      stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack
+      stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack,
+    }
+
+    snapshot.destroy = function(){
+      this._isDestoryed = true
+      for( var i in this){
+        delete this[i]
+      }
+      this.__proto__ = null
     }
 
     return snapshot
@@ -533,17 +561,22 @@ class BusResult{
   }
 }
 
-class BusError{
+export class BusError{
   constructor( code, data ){
+    if(! _.isNumber(code) ){
+      data = code
+      code = 500
+    }
+
     this.code = code
     if( data instanceof Error){
       this.data = {message : data.message }
-      this.stack = data.stack
+      this.stack = data.stack.split(/\n/)
     }else{
       this.data = data
       //去掉没用的两个stack
       let stackArray = new Error().stack.split(/\n/)
-      this.stack = stackArray.slice(0,1).concat(stackArray.slice(3)).join("\n")
+      this.stack = stackArray.slice(0,1).concat(stackArray.slice(3))
     }
 
     this.$class = data.constructor.name
@@ -580,4 +613,4 @@ class MuteRecord{
   }
 }
 
-export default Bus
+

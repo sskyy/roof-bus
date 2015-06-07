@@ -29,7 +29,7 @@ class Runtime{
   }
   reset(){
 
-    //必须destroy,防止有内存
+    //必须destroy,防止有内存泄露
     walkObject(this._definition,( data, key, path)=>{
       if( data instanceof Facade){
         if( _.isFunction(_.get( this, path).destroy  )){
@@ -39,6 +39,12 @@ class Runtime{
         return false
       }
     })
+
+    //删除, 触发垃圾回收
+    for( var keyName in this._definition ){
+      delete this[keyName]
+    }
+
     this.setup()
   }
 

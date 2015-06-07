@@ -48,4 +48,34 @@ describe("add listener and fire",()=>{
 
     bus.fire(event, ...arg)
   })
+
+  it("fire event in a promise",(done)=>{
+
+    var event = "sing"
+    var anotherEvent = "dance"
+    var arg =  ["lost+","start from bottom"]
+
+    bus.on(event,function firstListener(...eventArg){
+      eventArg.forEach( (singleArg,i) =>{
+        assert.equal( singleArg, arg[i])
+      })
+
+      return new Promise((resolve, reject)=>{
+        setTimeout(()=>{
+          this.fire(anotherEvent, ...eventArg)
+        }, 100)
+      })
+
+    })
+
+    bus.on(anotherEvent, function sendListener(...eventArg){
+      eventArg.forEach( (singleArg,i) =>{
+        assert.equal( singleArg, arg[i])
+      })
+      done()
+    })
+
+    bus.fire(event, ...arg)
+
+  })
 })
