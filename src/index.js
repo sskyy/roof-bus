@@ -488,6 +488,7 @@ export default class Bus{
   makeEventStack(event, listenersOrderedList ){
     var eventStack = {}
     eventStack.event = _.cloneDeep(event)
+    eventStack.$class = "event"
 
     var clonedListenerArray =  _.cloneDeep(listenersOrderedList.toArray(), (item)=>{
       if( item instanceof Set ){
@@ -497,6 +498,9 @@ export default class Bus{
       }else if( item instanceof Function){
         return `[Function ${item.name}]`
       }
+    }).map(( listener)=>{
+        listener.$class = 'listener'
+        return listener
     })
 
     eventStack.listeners = _.zipObject( clonedListenerArray.map(listener=>{
