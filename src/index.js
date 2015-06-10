@@ -418,7 +418,18 @@ export default class Bus{
       }.bind(this))
     })
 
+    //提供默认的this指针
+    this.bindThisToResolver(firePromise)
+
     return firePromise
+  }
+  bindThisToResolver(promise){
+    var _then = promise.then
+    promise.then = (...args)=>{
+      args = args.map( arg => { return arg.bind(this)})
+      return _then.call( promise, ...args)
+    }
+    return promise
   }
   parseResult( result ){
     if( result instanceof BusResult ) return result
@@ -464,13 +475,13 @@ export default class Bus{
     return this._runtime.data
   }
   fcall( event, listener ){
-
+    //TODO
   }
   then( fn ){
-    //当前对象中没有正在触发的监听器
+    //TODO 当前对象中没有正在触发的监听器
   }
   catch( fn ){
-    //当前对象中有触发器，并触发了错误
+    //TODO 当前对象中有触发器，并触发了错误
   }
   result( data, signal={} ){
     if( arguments.length ==1 ){
@@ -483,7 +494,7 @@ export default class Bus{
     return new BusError( code, data)
   }
   getRegisteredEvents(){
-
+    //TODO
   }
   makeEventStack(event, listenersOrderedList ){
     var eventStack = {}

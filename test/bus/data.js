@@ -84,11 +84,13 @@ describe("listener fire mute",()=>{
     })
 
 
-    bus.fire(event).then(()=>{
+    bus.fire(event).then(function(){
       assert.equal( bus.data.global.get(eventData.key), eventData.value)
       assert.equal( bus.data.global.get(childDventData.key), childDventData.value)
       assert.equal( bus.data.global.get(descendantEventData.key), descendantEventData.value)
       assert.equal( JSON.stringify(bus.data.global.get("person1")),JSON.stringify({name:eventData.value}))
+      //this 指针和bus相同
+      assert.equal( this, bus )
       done()
     }).catch((err)=>{
       done(err)
