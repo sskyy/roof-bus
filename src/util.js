@@ -205,6 +205,14 @@ function clone( source ){
   return extend(output, source)
 }
 
+function values( obj ){
+  if( typeof Object.values === "function" ){
+    return Object.values(obj)
+  }else{
+    return Object.keys( obj ).map(key=>{return obj[key]})
+  }
+}
+
 export default {
   isString,
   isArray,
@@ -226,6 +234,7 @@ export default {
   zipObject,
   pick,
   extend,
-  clone
+  clone,
+  values
 }
 

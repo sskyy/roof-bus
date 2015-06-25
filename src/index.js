@@ -414,7 +414,7 @@ export default class Bus{
         }
 
         //当所有监听器的第二阶段也执行完之后，再决定当前的promise是resolve还是reject
-        Promise.all( Object.values(results).map(result=>{return result.data}) ).then(resolve).catch(reject)
+        Promise.all( util.values(results).map(result=>{return result.data}) ).then(resolve).catch(reject)
       }.bind(this))
     })
 

@@ -107,9 +107,10 @@ describe("orderedList test", ()=>{
     })
 
     var error = new Error("none")
+    var i = 0
 
     var promise = new Promise((resolve,reject)=>{
-      var i = 0
+      console.log("forEachAsync begin")
       list.forEachAsync(( value, next )=>{
         i++
         console.log( i)
@@ -118,15 +119,14 @@ describe("orderedList test", ()=>{
         }
         next()
       },function allDone(error){
-        console.log("throwing out error")
+        console.log("throwing out error",i)
         if( error ) throw error
       })
     })
 
-    console.log("attaching catch")
     promise.catch(err=>{
-      console.log("asserting")
       assert.equal(err, error )
+      assert.equal(i, 3)
       done()
     })
 

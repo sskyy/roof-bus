@@ -50,6 +50,44 @@ describe("error test",()=>{
   })
 
 
+  it("expect to break the listener loop too", (done)=> {
+    var result = []
+    var error = new Error("something wrong")
+
+    bus.on(event, function firstListener() {
+      result.push(1)
+    })
+
+    bus.on(event, {
+      fn: function secondListener() {
+        result.push(2)
+      },
+      before: "firstListener"
+    })
+
+    bus.on(event, {
+      fn: function thirdListener() {
+        result.push(3)
+        return this.error(406,"custom error")
+      },
+      first: true,
+    })
+
+
+    bus.fire(event).then(()=> {
+      done("should not fire")
+    }).catch((err)=> {
+      try {
+        assert.equal(result.join(""), "3")
+        assert.equal(err.code, 406)
+        assert.equal(err.data, "custom error")
+        done()
+      } catch (e) {
+        done(e)
+      }
+    })
+  })
+
   it("expect to break the listener loop", (done)=> {
     var result = []
     var error = new Error("something wrong")

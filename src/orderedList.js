@@ -1,11 +1,10 @@
 /*
-改造waiting for 即使新插入的数据处于waiting中，也应该能遍历出来。
-做不到，因为无法确定waiting中的元素到底在遍历的哪个位置。
-不如增加一个api来检测是否还有waiting的元素。
+ 改造waiting for 即使新插入的数据处于waiting中，也应该能遍历出来。
+ 做不到，因为无法确定waiting中的元素到底在遍历的哪个位置。
+ 不如增加一个api来检测是否还有waiting的元素。
  */
 
-
-import util from "./util.js"
+import util from "lodash"
 
 class OrderedList {
   constructor(list = []) {
@@ -65,11 +64,7 @@ class OrderedList {
     return normalizedOrder
   }
   /*
-  order 中的before 或者after必须是 数组或者 Set
-  order 标准化后变成：
-  order : {
-    before : new Set(["listener1","listener2"])
-  }
+   order 中的before 或者after必须是 数组或者 Set
    */
   insert(key, value, order={}) {
     //TODO before he after 都支持数组形式，对插入的数据使用index来
@@ -133,7 +128,7 @@ class OrderedList {
     return result
   }
   applyOrderAround(obj, orderName){
-    var orderKeys = [...obj.order[orderName]]
+    var orderKeys = Array.from(obj.order[orderName])
     var aroundWhich = this._list.get(orderKeys[0])
     var cursor = aroundWhich
     var candidateKeys = orderKeys.slice(1)
@@ -172,15 +167,15 @@ class OrderedList {
   }
   lineUp(obj){
     var waitForKeys = []
-    if( obj.order.before) waitForKeys = waitForKeys.concat([...obj.order.before])
-    if( obj.order.after) waitForKeys = waitForKeys.concat([...obj.order.after])
+    if( obj.order.before) waitForKeys = waitForKeys.concat(Array.from(obj.order.before))
+    if( obj.order.after) waitForKeys = waitForKeys.concat(Array.from(obj.order.after))
 
 
     waitForKeys = new Set([...waitForKeys].filter((key)=>{ return !this._list.has(key)}))
 
     obj._waiting = waitForKeys
 
-    Array.prototype.forEach.call([...obj._waiting],(waitForKey)=>{
+    Array.from(obj._waiting).forEach((waitForKey)=>{
       if( !this._waitList.has(waitForKey) ){
         this._waitList.set(waitForKey , new Map)
       }
@@ -225,9 +220,9 @@ class OrderedList {
     } else {
       for (let list of this._waitList.values()) {
         for( let obj of list.values())
-        if (obj.key === key) {
-          return obj.value
-        }
+          if (obj.key === key) {
+            return obj.value
+          }
       }
     }
   }
@@ -256,21 +251,36 @@ class OrderedList {
   }
   forEachAsync(handler, callback) {
     var root = this
+    var iterationEnd = false
 
     function next(i, err) {
-      if (err) {
-        //console.log(err)
+      if (err!==undefined) {
         return callback(err)
       }
 
-      i ? handler(i.value, next.bind(root, i.next)) : callback()
+      if( i !== undefined ){
+        try{
+          handler(i.value, next.bind(null, i.next))
+        }catch(e){
+          //因为next层层try包裹了callback
+          //如果callback继续抛出error，就会多次调用callback
+          if( !iterationEnd ){
+            try{
+              iterationEnd= true
+              callback(e)
+            }catch(e){
+              throw e
+            }
+          }else{
+            throw e
+          }
+        }
+      }else{
+        return callback()
+      }
     }
 
-    try{
-      next(root.head)
-    }catch(e){
-      callback(e)
-    }
+    next(root.head)
   }
 }
 
@@ -300,6 +310,7 @@ function linkBefore(linkedObj, unLinkedObj) {
 
 
 export default OrderedList
+
 
 
 
