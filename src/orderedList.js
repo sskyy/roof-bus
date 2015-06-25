@@ -4,6 +4,7 @@
 不如增加一个api来检测是否还有waiting的元素。
  */
 
+
 import _ from "lodash"
 
 class OrderedList {
@@ -65,6 +66,10 @@ class OrderedList {
   }
   /*
   order 中的before 或者after必须是 数组或者 Set
+  order 标准化后变成：
+  order : {
+    before : new Set(["listener1","listener2"])
+  }
    */
   insert(key, value, order={}) {
     //TODO before he after 都支持数组形式，对插入的数据使用index来
@@ -128,7 +133,7 @@ class OrderedList {
     return result
   }
   applyOrderAround(obj, orderName){
-    var orderKeys = Array.from(obj.order[orderName])
+    var orderKeys = [...obj.order[orderName]]
     var aroundWhich = this._list.get(orderKeys[0])
     var cursor = aroundWhich
     var candidateKeys = orderKeys.slice(1)
@@ -167,15 +172,15 @@ class OrderedList {
   }
   lineUp(obj){
     var waitForKeys = []
-    if( obj.order.before) waitForKeys = waitForKeys.concat(Array.from(obj.order.before))
-    if( obj.order.after) waitForKeys = waitForKeys.concat(Array.from(obj.order.after))
+    if( obj.order.before) waitForKeys = waitForKeys.concat([...obj.order.before])
+    if( obj.order.after) waitForKeys = waitForKeys.concat([...obj.order.after])
 
 
     waitForKeys = new Set([...waitForKeys].filter((key)=>{ return !this._list.has(key)}))
 
     obj._waiting = waitForKeys
 
-    Array.from(obj._waiting).forEach((waitForKey)=>{
+    Array.prototype.forEach.call([...obj._waiting],(waitForKey)=>{
       if( !this._waitList.has(waitForKey) ){
         this._waitList.set(waitForKey , new Map)
       }
