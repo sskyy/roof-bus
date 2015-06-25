@@ -5,7 +5,7 @@
  */
 
 
-import _ from "lodash"
+import util from "./util.js"
 
 class OrderedList {
   constructor(list = []) {
@@ -73,7 +73,7 @@ class OrderedList {
    */
   insert(key, value, order={}) {
     //TODO before he after 都支持数组形式，对插入的数据使用index来
-    if( _.isUndefined(key) || _.isUndefined(value) ) throw new Error("key and value cannot be undefined")
+    if( key===undefined || value===undefined ) throw new Error("key and value cannot be undefined")
 
     order = this.normalizeOrder(order,key)
     var obj = {value, key, order}
@@ -248,7 +248,7 @@ class OrderedList {
       if( cursor.order.before ) order.before = [...cursor.order.before]
       if( cursor.order.after ) order.after = [...cursor.order.after]
 
-      list.insert(cursor.key,_.cloneDeep(cursor.value, cloneFn),order)
+      list.insert(cursor.key,util.cloneDeep(cursor.value, cloneFn),order)
       cursor = cursor.next
     }
 

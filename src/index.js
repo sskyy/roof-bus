@@ -1,5 +1,4 @@
 import util from "./util.js"
-import _ from "lodash"
 import Namespace from "./namespace.js"
 import Tree from "./tree.js"
 import OrderedList from "./orderedList.js"
@@ -9,9 +8,10 @@ import BusError from "./error.js"
 import Debug from "./debug.js"
 import debugHandler from "./debug-handler.js"
 
+
+
 //由环境变量决定debug level
 var debug = new Debug( null, debugHandler)
-
 
 export default class Bus{
   constructor(options={defaultModule:"_system"}){
@@ -54,12 +54,12 @@ export default class Bus{
     return `anonymous_${this._anonymousIndex++}`
   }
   insertListener( listener ){
-    if( !_.isString(listener.event) && !_.isRegExp(listener.event) ){
+    if( !util.isString(listener.event) && !util.isRegExp(listener.event) ){
       throw new Error("unknown event name type: "+listener.event)
     }
 
-    var map = _.isString(listener.event) ? this._eventListenerMap : this._rexEventListenerMap
-    var order = _.pick(listener, ['before','after','first','last'])
+    var map = util.isString(listener.event) ? this._eventListenerMap : this._rexEventListenerMap
+    var order = util.pick(listener, ['before','after','first','last'])
     var listenerArg = [listener.indexName, listener, order ]
 
     if( !map.get(listener.event.toString()) ){
@@ -95,7 +95,7 @@ export default class Bus{
     return this
   }
   getListenersFor(event){
-    var map = _.isString(event) ? this._eventListenerMap : this._rexEventListenerMap
+    var map = util.isString(event) ? this._eventListenerMap : this._rexEventListenerMap
     return map.get(event)
   }
   muteEvents( muteEventNames, type, source, inEventName ){
@@ -162,7 +162,7 @@ export default class Bus{
   }
   normalizeEvent( rawEvent ){
 
-    var fireEvent = _.isString(rawEvent) ? {name : rawEvent} : rawEvent
+    var fireEvent = util.isString(rawEvent) ? {name : rawEvent} : rawEvent
     fireEvent.muteBy = this.getMuteFor( fireEvent.name )
     if( !fireEvent.muteBy ){
       //mute 记录的是后代的事件禁用情况！muteBy记录的时当前的情况
@@ -261,8 +261,8 @@ export default class Bus{
     //获取所有匹配到的监听器，并且将正则监听器重新与字符串监听器排序
     for( let [rex,rexEventListener] of this._rexEventListenerMap ){
       if( (new RegExp(rex)).test(eventName) ){
-        let order = _.pick(rexEventListener, ['before','after','first','last'])
-        let listenerArg = [rexEventListener.indexName, _.clone(rexEventListener ), order ]
+        let order = util.pick(rexEventListener, ['before','after','first','last'])
+        let listenerArg = [rexEventListener.indexName, util.clone(rexEventListener ), order ]
         listeners.insert( ...listenerArg )
       }
     }
@@ -402,10 +402,10 @@ export default class Bus{
           }
         }
 
-        //都执行完之后，先将results数据并入到stack里面
-        _.forEach(results,(result,listenerIndexName)=>{
+        //都执行完之后，
+        for( let listenerIndexName in results ){
           this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
-        })
+        }
 
         //任何执行期的错误，打断当前循环，并且使promise reject
         if(err){
@@ -438,7 +438,7 @@ export default class Bus{
   }
   snapshot(event, listener){
     var snapshot = {_isSnapshot:true}
-    _.extend(snapshot, _.clone(this))
+    util.extend(snapshot, util.clone(this))
 
     snapshot.__proto__ = this.__proto__
 
@@ -455,7 +455,7 @@ export default class Bus{
 
     //注意 snapshot 时是不用调用data.child()的，因为同级snapshot共享数据
     snapshot._runtime = {
-      reset : _.noop,
+      reset : function noop(){},
       mute : liftedMuteClone,
       data : this._runtime.data,
       stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack,
@@ -498,14 +498,14 @@ export default class Bus{
   }
   makeEventStack(event, listenersOrderedList ){
     var eventStack = {}
-    eventStack.event = _.cloneDeep(event)
+    eventStack.event = util.cloneDeep(event)
     eventStack.$class = "event"
 
-    var clonedListenerArray =  _.cloneDeep(listenersOrderedList.toArray(), (item)=>{
+    var clonedListenerArray =  util.cloneDeep(listenersOrderedList.toArray(), (item)=>{
       if( item instanceof Set ){
         return [...item]
       }else if( item instanceof Map){
-        return _.zipObject( [...item.keys()],[...item.values()])
+        return util.zipObject( [...item.keys()],[...item.values()])
       }else if( item instanceof Function){
         return `[Function ${item.name}]`
       }
@@ -514,7 +514,7 @@ export default class Bus{
         return listener
     })
 
-    eventStack.listeners = _.zipObject( clonedListenerArray.map(listener=>{
+    eventStack.listeners = util.zipObject( clonedListenerArray.map(listener=>{
       return listener.indexName
     }), clonedListenerArray)
 
@@ -522,7 +522,7 @@ export default class Bus{
     return eventStack
   }
   normalizeListener(eventName, listener){
-    listener = _.isFunction(listener) ? { fn : listener} : listener
+    listener = util.isFunction(listener) ? { fn : listener} : listener
     listener.event = eventName
 
     //change plain string to Namespace object
@@ -597,7 +597,7 @@ class MuteRecord{
     }
   }
   clone( cloneFn){
-    return new MuteRecord( _.cloneDeep( this._mutes), cloneFn )
+    return new MuteRecord( util.cloneDeep( this._mutes), cloneFn )
   }
   lift(){
     this._mutes.forEach((mute)=>{
@@ -605,7 +605,7 @@ class MuteRecord{
     })
   }
   toArray(){
-    return _.cloneDeep(this._mutes)
+    return util.cloneDeep(this._mutes)
   }
 }
 

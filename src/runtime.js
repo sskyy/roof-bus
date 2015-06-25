@@ -1,14 +1,15 @@
-import _ from "lodash"
+import util from "./util.js"
 
 function walkObject( data, handler, path=[] ){
-  if( _.isFunction(data) ||  !_.isObject(data)) return
+  if( util.isFunction(data) ||  !util.isObject(data)) return
 
-  _.forEach(data,function(subData,key){
+  for( let key in data){
+    let subData = data[key]
     //console.log( subData, key)
     var keepWalking = handler(subData,key, path.concat(key) ) !== false
     //console.log( subData, key, keepWalking, path.concat(key))
     keepWalking &&  walkObject(subData, handler, path.concat(key))
-  })
+  }
 }
 
 
@@ -18,22 +19,23 @@ class Runtime{
     this.setup()
   }
   initializeData(){
-    return _.cloneDeep(this._definition,(child)=>{
+    return util.cloneDeep(this._definition,(child)=>{
       if( child instanceof  Facade){
         return new child.ctor(...child.args)
       }
     })
   }
   setup(){
-    _.extend( this, this.initializeData() )
+    util.extend( this, this.initializeData() )
   }
   reset(){
 
     //必须destroy,防止有内存泄露
     walkObject(this._definition,( data, key, path)=>{
       if( data instanceof Facade){
-        if( _.isFunction(_.get( this, path).destroy  )){
-          _.get( this, path).destroy()
+        let obj = util.getRef( this, path)
+        if( obj && util.isFunction( obj.destroy  )){
+          obj.destroy()
         }
         //stop walking
         return false

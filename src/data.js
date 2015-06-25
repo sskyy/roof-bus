@@ -1,4 +1,8 @@
-import _ from "lodash"
+import util from "./util.js"
+
+function isObject(obj){
+  return typeof obj === "object"
+}
 
 function getRef( obj, name ){
   var ns = name.split('.'),
@@ -6,7 +10,7 @@ function getRef( obj, name ){
     currentName
 
   while( currentName = ns.shift() ){
-    if(_.isObject(ref) && ref[currentName]){
+    if(isObject(ref) && ref[currentName]){
       ref = ref[currentName]
     }else{
       ref = undefined
@@ -26,8 +30,8 @@ function setRef( obj, name, data, overwrite=false){
 
   while( currentName = ns.shift() ){
     if( ns.length == 0 ){
-      if( _.isObject(ref[currentName] )){
-        _.merge(ref[currentName], data)
+      if( isObject(ref[currentName] )){
+        util.merge(ref[currentName], data)
 
       }else{
         if( ref[currentName] !== undefined && !overwrite ){
@@ -37,7 +41,7 @@ function setRef( obj, name, data, overwrite=false){
       }
 
     }else{
-      if( !_.isObject(ref[currentName])) {
+      if( !isObject(ref[currentName])) {
         if( ref[currentName] !== undefined && !overwrite ){
           throw new Error("you should set argument overwrite to true, if you want to change a exist data.")
         }

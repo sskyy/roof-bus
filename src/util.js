@@ -1,12 +1,63 @@
-var _ = require('lodash')
+var merge = require("lodash.merge")
+var uniq = require("lodash.uniq")
+var cloneDeep = require("lodash.clonedeep")
+
+function isObject( obj ){
+  return typeof obj === "object"
+}
+
+
+function isArray( obj ){
+  return Object.prototype.toString.call(obj) === "[object Array]"
+}
+
+
+function partialRight( func, arg, context ){
+  return function(){
+    var runtimeArgs = [...arguments].concat(arg)
+    return func(...runtimeArgs)
+  }
+}
+
+
+function isString(str){
+  return typeof str === "string"
+}
+
+function isRegExp(rex){
+  return Object.prototype.toString.call(rex) === "[object RegExp]"
+}
+
+function pick(obj , keys ){
+  var output = {}
+  keys.forEach((key)=>{
+    output[key] = obj[key]
+  })
+  return output
+}
+
+function isFunction(func){
+  return typeof func === "function"
+}
+
+function zipObject( keys, values ){
+  var output = {}
+  keys.forEach((key,i)=>{
+    output[key] = values[i]
+  })
+  return output
+}
+
+function noop(){}
+
 
 
 
 function mergeDefaults(a,b){
-  return _.partialRight(_.merge, function(a, b){
-    if(_.isArray(a) ){
-      return _.uniq(a.concat(b))
-    }else if(_.isObject(a)){
+  return partialRight(merge, function(a, b){
+    if(isArray(a) ){
+      return uniq(a.concat(b))
+    }else if(isObject(a)){
       //return undefined meas go merge children
       return undefined
     }else{
@@ -16,10 +67,10 @@ function mergeDefaults(a,b){
 }
 
 function mergeDeep( a, b){
-  return _.partialRight(_.merge , function( a, b){
-    if(_.isArray(a) && _.isArray(b)){
+  return partialRight(merge , function( a, b){
+    if(isArray(a) && isArray(b)){
       return a.concat(b)
-    }else if(_.isObject(a) && _.isObject(b)){
+    }else if(isObject(a) && isObject(b)){
       return mergeDeep(a,b)
     }else{
       return undefined
@@ -28,12 +79,13 @@ function mergeDeep( a, b){
 }
 
 function getRef( obj, name ){
-  var ns = name.split('.'),
+  var ns = (typeof name === "string") ? name.split(".") :  [].concat(name),
     ref = obj,
     currentName
 
+
   while( currentName = ns.shift() ){
-    if(_.isObject(ref) && ref[currentName]){
+    if(isObject(ref) && ref[currentName]){
       ref = ref[currentName]
     }else{
       ref = undefined
@@ -53,17 +105,17 @@ function setRef( obj, name, data){
 
   while( currentName = ns.shift() ){
     if( ns.length == 0 ){
-      if( _.isObject(ref[currentName] )){
-        _.merge(ref[currentName], data)
+      if( isObject(ref[currentName] )){
+        merge(ref[currentName], data)
 
       }else{
-        if( ref[currentName] !== undefined ) logger.debug("you are changing a exist data",name)
+        if( ref[currentName] !== undefined ) console.debug("you are changing a exist data",name)
         ref[currentName] = data
       }
 
     }else{
-      if( !_.isObject(ref[currentName])) {
-        if( ref[currentName] !== undefined ) logger.debug("your data will be reset to an object",currentName)
+      if( !isObject(ref[currentName])) {
+        if( ref[currentName] !== undefined ) console.debug("your data will be reset to an object",currentName)
         ref[currentName] = {}
       }
       ref = ref[currentName]
@@ -74,7 +126,7 @@ function setRef( obj, name, data){
 }
 
 function isPromiseAlike( obj ){
-  return _.isObject(obj) && _.isFunction(obj.then) && _.isFunction(obj.catch)
+  return isObject(obj) && isFunction(obj.then) && isFunction(obj.catch)
 }
 
 function insertListener(arr, item) {
@@ -141,5 +193,39 @@ function ensureSet(obj,key,value){
   }
 }
 
-export default {isPromiseAlike,mergeDefaults,mergeDeep,getRef,setRef, insertListener, findIndex,ensureArray,ensureSet}
+function extend( target, source ){
+  for( let i in source){
+    target[i] = source[i]
+  }
+  return target
+}
+
+function clone( source ){
+  var output = {}
+  return extend(output, source)
+}
+
+export default {
+  isString,
+  isArray,
+  isFunction,
+  isObject,
+  isPromiseAlike,
+  mergeDefaults,
+  mergeDeep,
+  getRef,
+  setRef,
+  insertListener,
+  findIndex,
+  ensureArray,
+  ensureSet,
+  cloneDeep,
+  merge,
+  uniq,
+  noop,
+  zipObject,
+  pick,
+  extend,
+  clone
+}
 

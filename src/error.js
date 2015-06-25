@@ -1,8 +1,10 @@
-import _ from "lodash"
+function isNumber( obj ){
+    return typeof obj === "number"
+}
 
 export default class BusError{
     constructor( code, data ){
-        if(! _.isNumber(code) ){
+        if(! isNumber(code) ){
             data = code
             code = 500
         }
