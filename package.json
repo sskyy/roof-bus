@@ -2,7 +2,7 @@
   "name": "roof-bus",
   "version": "0.0.6",
   "description": "roof bus library",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "directories": {
     "test": "test"
   },
@@ -31,10 +31,10 @@
   },
   "dependencies": {
     "babel": "~5.5.4",
-    "lodash": "^3.9.1",
     "lodash.clonedeep": "~3.0.1",
     "lodash.merge": "~3.3.1",
-    "lodash.uniq": "~3.2.1"
+    "lodash.uniq": "~3.2.1",
+    "co": "~4.5.4"
   },
   "pre-commit": [
     "compile"
