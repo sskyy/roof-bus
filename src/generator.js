@@ -10,9 +10,14 @@ import Debug from "./debug.js"
 import debugHandler from "./debug-handler.js"
 import co from "co"
 
+
+function isGenerator(fn) {
+    return fn.constructor.name === 'GeneratorFunction';
+}
+
+
 //由环境变量决定debug level
 var debug = new Debug( null, debugHandler)
-
 
 export default class Bus{
     constructor(options={defaultModule:"_system"}){
@@ -159,7 +164,6 @@ export default class Bus{
 
         // 冲突情况: 异步的 waitFor 中返回的结果无法 block 任何
         return this.fireListeners( event, listeners, data )
-
     }
     normalizeEvent( rawEvent ){
 
@@ -270,6 +274,16 @@ export default class Bus{
 
         return listeners
     }
+    callListener( listener, snapshot, args ){
+        //执行单个监听器,一定返回一个promise
+        if( isGenerator(listener.fn) ){
+            return co(function *(){
+                yield listener.fn.call(snapshot, ...args)
+            })
+        }else{
+            return Promise.resolve(listener.fn.call( snapshot, ...args ))
+        }
+    }
     fireListeners( event, listeners, data ){
         //依次触发，通过 snapshot 连接 traceStack, runtime
 
@@ -277,72 +291,62 @@ export default class Bus{
 
         //debug.log("fire======",event.name,"listeners:")
         //debug.log( event.disable,[...this._disable.get(event.name).keys()])
+        var results = {}
 
-        var firePromise = new Promise((resolve,reject)=>{
-            if( event.muteBy ){
-                return setTimeout(resolve, 1)
-            }
+        var listenerCursor = {next:listeners.head}
+        var listener
+
+        var firePromise = co(function *(){
+            if( event.muteBy ) return false
 
             //OrderedList 已经禁止了重名，所以一个event下的listener是不会重名的
             //只记录当前监听器循环中的执行阶段的错误
             //异步阶段的错误在 result 中返回，除非开发者没有return相应的promise
-            var results = {}
 
-
-            listeners.forEachAsync((listener, next)=> {
+            //开始遍历监听器
+            while(  listenerCursor = listenerCursor.next ){
+                listener = listenerCursor.value
                 //target 和 disable 可以共存
-                if( event.target && !event.target.has(listener.indexName) ) return next()
-                if( event.disable && event.disable.get(listener.indexName) ) return next()
+                if( event.target && !event.target.has(listener.indexName) ) continue;
+                if( event.disable && event.disable.get(listener.indexName) ) continue;
 
+                //TODO 同异步情况区分snapshot场景过于复杂，暂时不区分
+                let snapshot = this.snapshot(event, listener)
+                //保存当前结果
+                let result
 
-                var snapshot = this.snapshot(event, listener)
-                //处理监听器的 waitFor
-
-                var result
-                if( listener.waitFor){
-                    //debug.log("calling listener",listener.indexName, listener.waitFor)
+                //如果要等某个异步监听器的返回
+                if( listener.waitFor) {
+                    debug.log("calling listener",listener.indexName, listener.waitFor)
                     //如果waitFor的监听器返回的是promise，那么就等其resolve,
-
                     let promiseToWait = [...listener.waitFor].reduce((list,waitForName)=>{
                         if( results[waitForName].data instanceof Promise){
                             list.push( results[waitForName].data )
                         }else{
-                            debug.warn(waitForName,"result is not a promise",results[waitForName])
+                            debug.warn(`${waitForName} result is not a promise`,results[waitForName])
                         }
                         return list
                     },[])
 
                     debug.log(listener.indexName,"must wait for", listener.waitFor, promiseToWait.length)
+
                     //并且把自己的结果也包装成Promise，这样可以继续让其他监听器waitFor
                     result = this.parseResult( Promise.all(promiseToWait).then(()=>{
-                        return listener.fn.call(snapshot, ...data)
-                        //这里只能在stackTrace里面做记录，因为promise已经是执行的第二阶段了。
-                        //throw err 没有用。
-                        //}).catch(err=>{
-                        //  throw err
+                        return this.callListener( listener, snapshot, data )
                     }))
-
                 }else{
-                    //debug.log("calling none waitFor listener",listener.indexName, listener.waitFor)
-                    try{
-                        result = this.parseResult( listener.fn.call(snapshot, ...data) )
-                    }catch(e){
-                        //任何执行时的错误，可以打断当前的监听器执行循环，并使当前promise reject
-                        //错误也扔到 results中，之后用来收集到 stack里
-                        let error = new BusError(500,e)
-                        results[listener.indexName] = this.parseResult( error, {})
-                        return next(error)
-                    }
+                    //如果监听器没有waitFor
+                    debug.log("calling none waitFor listener",listener.indexName, listener.waitFor)
+                    result = this.parseResult( yield this.callListener(listener, snapshot, data) )
 
+                    //如果执行过程中出错，会得到reject的promise，可以交给外界处理。
+                    //如果是开发者自己返回的error，那么就也伪装成一个reject的promise扔出去
                     if( result.data instanceof BusError ){
-                        results[listener.indexName] = result
-                        return next(result.data)
+                        yield Promise.reject( result )
                     }
                 }
 
-                //如果返回 BusError，则也认为是执行期错误。
-
-
+                //执行没有问题
                 //暂存一下，后面的waitFor需要用
                 results[listener.indexName] = result
 
@@ -393,30 +397,28 @@ export default class Bus{
                 }else{
                     snapshot.destroy()
                 }
+            }
 
-                next()
-            }, function allDone(err) {
-                //debug.log("fire done",event.name)
-                if( err ){
-                    if( !(err instanceof BusError)){
-                        err = new BusError(500, err)
-                    }
-                }
+            //TODO 所有监听器都已经开始执行，等所有异步的的都返回后再一起resolve
+        }.bind(this))
 
-                //都执行完之后，先将results数据并入到stack里面
-                _.forEach(results,(result,listenerIndexName)=>{
-                    this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
-                })
+        firePromise.catch((err)=>{
+            //一旦出现问题，循环会自动终止。
+            debug.log("fire error",event.name)
+            if( !(err instanceof BusError)){
+                err = new BusError(500, err)
+            }
+            debug.error(err)
 
-                //任何执行期的错误，打断当前循环，并且使promise reject
-                if(err){
-                    debug.error( err )
-                    return reject( err )
-                }
+            //TODO 补充出错的那个监听的result记录
+            if( listener && results[listener.indexName] === undefined ){
+                results[listener.indexName] = this.parseResult(err,{})
+            }
 
-                //当所有监听器的第二阶段也执行完之后，再决定当前的promise是resolve还是reject
-                Promise.all( Object.values(results).map(result=>{return result.data}) ).then(resolve).catch(reject)
-            }.bind(this))
+            //TODO 都执行完之后，先将results数据并入到stack里面
+            _.forEach(results,(result,listenerIndexName)=>{
+                this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
+            })
         })
 
         //提供默认的this指针

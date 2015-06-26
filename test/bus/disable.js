@@ -119,5 +119,4 @@ describe("listener fire mute",()=>{
       done(err)
     })
   })
-
 })
