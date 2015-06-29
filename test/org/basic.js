@@ -1,7 +1,7 @@
+import Bus from "../../../src/index"
 import assert from "assert"
 
 
-module.exports = function( Bus ){
   describe("add listener and fire",()=>{
     //return
     var bus
@@ -92,7 +92,6 @@ module.exports = function( Bus ){
 
 
   })
-}
 
 
 

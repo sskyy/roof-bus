@@ -315,9 +315,10 @@ export default class Bus{
                 //保存当前结果
                 let result
 
+                //TODO 增加 async
                 //如果要等某个异步监听器的返回
-                if( listener.waitFor) {
-                    debug.log("calling listener",listener.indexName, listener.waitFor)
+                if( listener.waitFor  ) {
+                    //debug.log("calling listener",listener.indexName, listener.waitFor)
                     //如果waitFor的监听器返回的是promise，那么就等其resolve,
                     let promiseToWait = [...listener.waitFor].reduce((list,waitForName)=>{
                         if( results[waitForName].data instanceof Promise){
@@ -328,21 +329,22 @@ export default class Bus{
                         return list
                     },[])
 
-                    debug.log(listener.indexName,"must wait for", listener.waitFor, promiseToWait.length)
+                    //debug.log(listener.indexName,"must wait for", listener.waitFor, promiseToWait.length)
 
                     //并且把自己的结果也包装成Promise，这样可以继续让其他监听器waitFor
+                    let listenerSnapshot = listener
                     result = this.parseResult( Promise.all(promiseToWait).then(()=>{
-                        return this.callListener( listener, snapshot, data )
+                        return this.callListener( listenerSnapshot, snapshot, data )
                     }))
                 }else{
                     //如果监听器没有waitFor
-                    debug.log("calling none waitFor listener",listener.indexName, listener.waitFor)
+                    //debug.log("calling none waitFor listener",listener.indexName, listener.waitFor)
                     result = this.parseResult( yield this.callListener(listener, snapshot, data) )
 
                     //如果执行过程中出错，会得到reject的promise，可以交给外界处理。
                     //如果是开发者自己返回的error，那么就也伪装成一个reject的promise扔出去
                     if( result.data instanceof BusError ){
-                        yield Promise.reject( result )
+                        yield Promise.reject( result.data )
                     }
                 }
 
@@ -400,15 +402,13 @@ export default class Bus{
             }
 
             //TODO 所有监听器都已经开始执行，等所有异步的的都返回后再一起resolve
-        }.bind(this))
-
-        firePromise.catch((err)=>{
+        }.bind(this)).catch((err)=>{
             //一旦出现问题，循环会自动终止。
-            debug.log("fire error",event.name)
             if( !(err instanceof BusError)){
+                console.log("=====>",err instanceof BusError,err)
                 err = new BusError(500, err)
             }
-            debug.error(err)
+            //debug.error(err)
 
             //TODO 补充出错的那个监听的result记录
             if( listener && results[listener.indexName] === undefined ){
@@ -419,6 +419,9 @@ export default class Bus{
             _.forEach(results,(result,listenerIndexName)=>{
                 this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
             })
+
+            //改变抛出的err
+            return Promise.reject(err)
         })
 
         //提供默认的this指针

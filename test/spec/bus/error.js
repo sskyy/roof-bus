@@ -1,12 +1,6 @@
+import Bus from "../../../src/index"
 import assert from "assert"
-import prettyjson from "prettyjson"
-var print = function( obj ){
-  console.log( prettyjson.render(obj))
-}
 
-//TODO tracestack 测试！！！！
-
-module.exports = function( Bus ){
   describe("error test",()=>{
     //return
     var bus
@@ -45,7 +39,6 @@ module.exports = function( Bus ){
       bus.fire(event).then(()=> {
         done("should not fire")
       }).catch((err)=> {
-        print( bus._runtime.stack )
         try {
           assert.equal(result.join(""), "3")
           assert.equal(err.origin, error)
@@ -56,6 +49,44 @@ module.exports = function( Bus ){
       })
     })
 
+
+    it("expect to break the listener loop too", (done)=> {
+      var result = []
+      var error = new Error("something wrong")
+
+      bus.on(event, function firstListener() {
+        result.push(1)
+      })
+
+      bus.on(event, {
+        fn: function secondListener() {
+          result.push(2)
+        },
+        before: "firstListener"
+      })
+
+      bus.on(event, {
+        fn: function thirdListener() {
+          result.push(3)
+          return this.error(406,"custom error")
+        },
+        first: true,
+      })
+
+
+      bus.fire(event).then(()=> {
+        done("should not fire")
+      }).catch((err)=> {
+        try {
+          assert.equal(result.join(""), "3")
+          assert.equal(err.code, 406)
+          assert.equal(err.data, "custom error")
+          done()
+        } catch (e) {
+          done(e)
+        }
+      })
+    })
 
     it("expect to break the listener loop", (done)=> {
       var result = []
@@ -193,7 +224,6 @@ module.exports = function( Bus ){
         done("should not fire")
       }).catch((err)=>{
         try{
-          //console.log( err.stack)
           assert.equal( result.join(""), "34521")
           assert.equal(err.data, errorData)
           assert.equal(err.code, errorCode)
@@ -207,6 +237,4 @@ module.exports = function( Bus ){
 
 
   })
-}
-
 

@@ -18,6 +18,7 @@ var handlers = {
                 if( !console.group ){
                     //服务器端
                     console.group = function(){}
+                    console.groupEnd = function(){}
                 }
                 console.group("This is Roof dev message:")
                 args.forEach((arg)=>{

@@ -1,4 +1,4 @@
-import Data from  "../../src/data.js"
+import Data from  "../../../src/data.js"
 import assert from "assert"
 
 

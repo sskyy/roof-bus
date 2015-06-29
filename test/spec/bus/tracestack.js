@@ -1,12 +1,12 @@
+import Bus from "../../../src/index"
 import assert from "assert"
 import prettyjson from "prettyjson"
 var print = function( obj ){
   console.log( prettyjson.render(obj))
 }
 
-//TODO tracestack 测试！！！！
+//TODO 补充
 
-module.exports = function( Bus ){
   describe("error test",()=>{
     //return
     var bus
@@ -207,6 +207,5 @@ module.exports = function( Bus ){
 
 
   })
-}
 
 
