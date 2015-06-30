@@ -402,7 +402,12 @@ export default class Bus{
             }
 
             //TODO 所有监听器都已经开始执行，等所有异步的的都返回后再一起resolve
-        }.bind(this)).catch((err)=>{
+        }.bind(this)).then(()=>{
+            // 都执行完之后，先将results数据并入到stack里面
+            _.forEach(results,(result,listenerIndexName)=>{
+                this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
+            })
+        }).catch((err)=>{
             //一旦出现问题，循环会自动终止。
             if( !(err instanceof BusError)){
                 console.log("=====>",err instanceof BusError,err)
@@ -410,12 +415,12 @@ export default class Bus{
             }
             //debug.error(err)
 
-            //TODO 补充出错的那个监听的result记录
+            // 补充出错的那个监听的result记录
             if( listener && results[listener.indexName] === undefined ){
                 results[listener.indexName] = this.parseResult(err,{})
             }
 
-            //TODO 都执行完之后，先将results数据并入到stack里面
+            // 都执行完之后，先将results数据并入到stack里面
             _.forEach(results,(result,listenerIndexName)=>{
                 this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
             })
