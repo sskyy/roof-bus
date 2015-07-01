@@ -410,7 +410,6 @@ export default class Bus{
         }).catch((err)=>{
             //一旦出现问题，循环会自动终止。
             if( !(err instanceof BusError)){
-                console.log("=====>",err instanceof BusError,err)
                 err = new BusError(500, err)
             }
             //debug.error(err)

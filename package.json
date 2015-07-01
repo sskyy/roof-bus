@@ -30,7 +30,6 @@
     "webpack-dev-server": "~1.9.0"
   },
   "dependencies": {
-    "babel": "~5.5.4",
     "lodash.clonedeep": "~3.0.1",
     "lodash.merge": "~3.3.1",
     "lodash.uniq": "~3.2.1",
