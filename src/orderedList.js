@@ -1,10 +1,4 @@
-/*
- 改造waiting for 即使新插入的数据处于waiting中，也应该能遍历出来。
- 做不到，因为无法确定waiting中的元素到底在遍历的哪个位置。
- 不如增加一个api来检测是否还有waiting的元素。
- */
-
-import util from "lodash"
+import util from "./util"
 
 class OrderedList {
   constructor(list = []) {
