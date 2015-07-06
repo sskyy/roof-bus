@@ -1,5 +1,5 @@
 import assert from "assert"
-import {Runtime,Facade} from "../../src/runtime.js"
+import {Runtime,Facade} from "../../../src/runtime.js"
 
 class TestFacade{
   constructor( args ){

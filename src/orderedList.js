@@ -195,7 +195,7 @@ class OrderedList {
   forEach( handler) {
     var i = this.head
     while (i) {
-      handler(i.value)
+      handler(i.value, i.key)
       i = i.next
     }
   }

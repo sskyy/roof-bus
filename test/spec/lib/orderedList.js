@@ -1,5 +1,5 @@
 import assert from "assert"
-import OrderedList from  "../../src/orderedList.js"
+import OrderedList from  "../../../src/orderedList.js"
 import _ from "lodash"
 
 describe("orderedList test", ()=>{

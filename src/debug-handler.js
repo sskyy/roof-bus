@@ -15,10 +15,12 @@ function redDuckTypeConsole( tag, arg){
 var handlers = {
     error : {
         error : function busErrorHandler(...args){
-            if( console.group ){
-                //浏览器端
+                if( !console.group ){
+                    //服务器端
+                    console.group = function(){}
+                    console.groupEnd = function(){}
+                }
                 console.group("This is Roof dev message:")
-
                 args.forEach((arg)=>{
                     if( arg instanceof  BusError){
                         console.group("Roof-Bus error")
@@ -34,9 +36,6 @@ var handlers = {
                 })
 
                 console.groupEnd()
-            }else{
-                return console.error.call(console, ...args)
-            }
         }
     }
 }
