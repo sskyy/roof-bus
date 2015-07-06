@@ -352,7 +352,7 @@ export default class Bus{
                 //暂存一下，后面的waitFor需要用
                 results[listener.indexName] = result
 
-                //debug.log( `result of ${listener.indexName}`,result,result instanceof BusResult )
+                //debug.log( `result of ${listener.indexName}`,result,result instanceof ListenerResult )
 
                 //动态处理mute
                 if( result.signal.mute ){
@@ -401,12 +401,16 @@ export default class Bus{
                 }
             }
 
-            //TODO 所有监听器都已经开始执行，等所有异步的的都返回后再一起resolve
+            //TODO 支持async 参数 所有监听器都已经开始执行，等所有异步的的都返回后再一起resolve
         }.bind(this)).then(()=>{
             // 都执行完之后，先将results数据并入到stack里面
             _.forEach(results,(result,listenerIndexName)=>{
                 this._runtime.stack[event._stackIndex].listeners[listenerIndexName].result = results[listenerIndexName]
             })
+
+            //TODO 返回一个 bus result 对象，这个对象上的 data 可以用来获取当前事件的数据
+            return new BusResult(this._runtime.data)
+
         }).catch((err)=>{
             //一旦出现问题，循环会自动终止。
             if( !(err instanceof BusError)){
@@ -442,7 +446,7 @@ export default class Bus{
         return promise
     }
     parseResult( result ){
-        if( result instanceof BusResult ) return result
+        if( result instanceof ListenerResult ) return result
 
         return this.result(result,{})
     }
@@ -458,7 +462,7 @@ export default class Bus{
         }))
 
 
-        //对当前的listener创建一个新的stack，用来记录其中触发的event
+        //对当前的listener创建一个新的_runtime，用来记录其中触发的event
         //debug.log( Object.keys(this._runtime.stack[event._stackIndex].listeners), listener.indexName)
         //debug.log(listener.indexName, this._runtime.stack[event._stackIndex].listeners[listener.indexName])
         this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack = []
@@ -471,15 +475,25 @@ export default class Bus{
             stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack,
         }
 
-        snapshot.destroy = function(){
-            this._isDestoryed = true
-            for( var i in this){
-                delete this[i]
-            }
-            this.__proto__ = null
-        }
-
         return snapshot
+    }
+    clone(){
+        var cloned = {_isSnapshot:true}
+        _.extend(cloned, _.clone(this))
+
+        cloned.__proto__ = this.__proto__
+
+        //clone一个全新的runtime
+        cloned._runtime = this._runtime.clone()
+
+        return cloned
+    }
+    destroy(){
+        for( var i in this){
+            delete this[i]
+        }
+        this._isDestoryed = true
+        this.__proto__ = null
     }
     get data(){
         return this._runtime.data
@@ -493,12 +507,13 @@ export default class Bus{
     catch( fn ){
         //TODO 当前对象中有触发器，并触发了错误
     }
+    //这个得到的是每个监听器的Result
     result( data, signal={} ){
         if( arguments.length ==1 ){
             signal = data
             data = undefined
         }
-        return new BusResult( data, signal)
+        return new ListenerResult( data, signal)
     }
     error( code, data ){
         return new BusError( code, data)
@@ -582,7 +597,7 @@ export default class Bus{
     }
 }
 
-class BusResult{
+class ListenerResult{
     constructor( data, signal){
         this.$class = (data===null || data===undefined) ? data : data.constructor.name
         this.data = data
@@ -590,6 +605,24 @@ class BusResult{
     }
 }
 
+class DataProxy{
+    constructor( dataIns ){
+        this.data = dataIns.data
+        if( !dataIns.isGlobal ){
+            this.global = new DataProxy( dataIns.global )
+        }
+    }
+    get( key){
+        //TODO 要不要cloneDeep 保障内存一定会被销毁？ cloneDeep 会导致无法传递非 plainObject
+        return util.getRef( this.data, key)
+    }
+}
+
+class BusResult{
+    constructor( dataIns ){
+        this.data = new DataProxy(dataIns)
+    }
+}
 
 
 class MuteRecord{

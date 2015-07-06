@@ -53,14 +53,20 @@ function setRef( obj, name, data, overwrite=false){
 }
 
 
+
 class Data{
   constructor( global ){
     if( global ){
       this.global = global
     }else{
-      //循环引用，防止用户不知道自己在顶层。
-      //全局应该只有一个这样的数据对象
-      this.global = this
+      //global 不能自己生成，而是由第一个 child data生成
+      let global = new Data({})
+      //强行修改指针
+      global.global = global
+      global.isGlobal = true
+
+      this.global = global
+
     }
 
     this.data = {}
@@ -76,10 +82,10 @@ class Data{
     return getRef( this.data, key)
   }
   child(){
+    //没有引用子对象，不会引起循环引用
     return new Data( this.global || this )
   }
-  //一定要有destroy，runtime在reset时会调用
-  //清除循环引用，防止内存泄露
+  //runtime在reset时会调用 destroy。防止内存泄露。
   destroy(){
     this.global = null
     this.data = null

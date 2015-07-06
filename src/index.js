@@ -38,6 +38,7 @@ export default class Bus{
       errors : []
     })
 
+
   }
   on( eventName, originListener ){
     var listener = this.normalizeListener(eventName,originListener)
@@ -133,6 +134,9 @@ export default class Bus{
   fire( eventName, ...data ){
     //fire前需要清空上一次的 runtime 数据(数据树 结果树 调用栈)
     this._runtime.reset()
+
+
+
     var event  = this.normalizeEvent(eventName)
     var listeners =  this.findListenersForEvent( event.name )
 
@@ -157,8 +161,12 @@ export default class Bus{
     // 如果返回的是普通的对象，则构建结果树(不是数据树！)
 
     // 冲突情况: 异步的 waitFor 中返回的结果无法 block 任何
-    return this.fireListeners( event, listeners, data )
+    var result = this.fireListeners( event, listeners, data )
 
+    //Thanks for IE8's funny Object.defineProperty!!!!!!
+    this.data = this._IEdata(this)
+
+    return result
   }
   normalizeEvent( rawEvent ){
 
@@ -461,6 +469,9 @@ export default class Bus{
       stack : this._runtime.stack[event._stackIndex].listeners[listener.indexName].stack,
     }
 
+    //Thanks for IE8's funny Object.defineProperty!!!!!!
+    snapshot.data = this._IEdata(snapshot)
+
     snapshot.destroy = function(){
       this._isDestoryed = true
       for( var i in this){
@@ -471,8 +482,34 @@ export default class Bus{
 
     return snapshot
   }
-  get data(){
-    return this._runtime.data
+  clone(){
+    var cloned = {_isSnapshot:true}
+    _.extend(cloned, _.clone(this))
+
+    cloned.__proto__ = this.__proto__
+
+    //clone一个全新的runtime
+    cloned._runtime = this._runtime.clone()
+
+    //Thanks for IE8's funny Object.defineProperty!!!!!!
+    cloned.data = this._IEdata(cloned)
+
+    return cloned
+  }
+  //Thanks for IE8's funny Object.defineProperty!!!!!!
+  //get data(){
+  //  return this._runtime.data
+  //}
+  _IEdata( that ){
+    return {
+      get : function(key){
+        return that._runtime.data.get(key)
+      },
+      set : function(key,value){
+        return that._runtime.data.set(key,value)
+      },
+      global : that._runtime.data.global
+    }
   }
   fcall( event, listener ){
     //TODO

@@ -62,7 +62,7 @@ describe("data", ()=>{
     for( let key in testData) {
       assert.equal( testData[key], childData.global.get(key))
       assert.equal( testData[key], data.global.get(key))
-      assert.equal( testData[key], data.get(key))
+      assert.notEqual( testData[key], data.get(key))
     }
   })
 })

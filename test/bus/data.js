@@ -24,14 +24,14 @@ module.exports = function( Bus ){
       bus.on( event,{
         fn:function secondListener(){
           assert.equal( this.data.get(eventData.key), eventData.value)
-          this.fire(childEvent)
+          return this.fire(childEvent)
         }
       })
 
       bus.on( childEvent,function childEventListener(  ){
         assert.equal( this.data.get(eventData.key), undefined)
         this.data.set(childDventData.key, childDventData.value)
-        this.fire(descendantEvent)
+        return this.fire(descendantEvent)
       })
 
       bus.on( descendantEvent, function descendantListener(){
