@@ -11,7 +11,7 @@
     "testone": "mocha --compilers js:babel/register",
     "testbus": "mocha --compilers js:babel/register ./test/bus",
     "testlib": "mocha --compilers js:babel/register ./test/lib",
-    "compile": "babel src --out-dir lib --loose"
+    "compile": "babel src --out-dir lib"
   },
   "keywords": [
     "event"
