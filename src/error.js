@@ -12,12 +12,17 @@ export default class BusError{
         this.code = code
         if( data instanceof Error){
             this.data = {message : data.message }
-            this.stack = data.stack.split(/\n/)
+            if( data.stack ){
+                this.stack = data.stack.split(/\n/)
+            }
         }else{
             this.data = data
             //去掉没用的两个stack
-            let stackArray = new Error().stack.split(/\n/)
-            this.stack = stackArray.slice(0,1).concat(stackArray.slice(3))
+            var fakeError = new Error()
+            if( fakeError.stack ){
+                let stackArray = new Error().stack.split(/\n/)
+                this.stack = stackArray.slice(0,1).concat(stackArray.slice(3))
+            }
         }
 
         this.$class = (data === undefined || data === null) ? "Null" : data.constructor.name

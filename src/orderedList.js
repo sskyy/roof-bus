@@ -8,14 +8,18 @@ class OrderedList {
     this.tail = null
     this._waitList = new Map
     this._defaultInsertCursor = null
+
+    //Thanks for IE8's funny Object.defineProperty!!!!!!
+    this.length = 0
+
     list.forEach((data)=> {
       this.insert(...data)
     })
   }
-
-  get length(){
-    return this._list.size
-  }
+  //Thanks for IE8's funny Object.defineProperty!!!!!!
+  //  get length(){
+  //    return this._list.size
+  //  }
   normalizeOrder( order, key ){
     /*
      order 的互斥关系:
@@ -63,7 +67,6 @@ class OrderedList {
   insert(key, value, order={}) {
     //TODO before he after 都支持数组形式，对插入的数据使用index来
     if( key===undefined || value===undefined ) throw new Error("key and value cannot be undefined")
-
     order = this.normalizeOrder(order,key)
     var obj = {value, key, order}
 
@@ -93,6 +96,8 @@ class OrderedList {
     }
 
     this._list.set(obj.key, obj)
+    //Thanks for IE8's funny Object.defineProperty!!!!!!
+    this.length++
   }
   hasOrder(order){
     return order.first || order.last || (order.before&&order.before.size) || (order.after&&order.after.size)

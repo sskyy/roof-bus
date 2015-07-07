@@ -600,11 +600,10 @@ export default class Bus{
     }
 
     if( !listener.name ){
-      listener.name = listener.fn.name || this.anonymousName()
+      listener.name = util.fnName(listener.fn) || this.anonymousName()
     }
 
     listener.indexName  = listener.module.toString() ? `${listener.module.toString()}.${listener.name}` : listener.name
-
     return listener
   }
 }

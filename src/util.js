@@ -213,6 +213,13 @@ function values( obj ){
   }
 }
 
+function fnName( fn ){
+  //Thanks for IE8's broken function.name
+  if( fn.name ) return fn.name
+  var match = fn.toString().match(/^function\s*([^\s(]+)/);
+  if( match ) return match[1]
+}
+
 export default {
   isString,
   isArray,
@@ -235,6 +242,7 @@ export default {
   pick,
   extend,
   clone,
-  values
+  values,
+  fnName
 }
 
