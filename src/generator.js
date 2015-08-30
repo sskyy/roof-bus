@@ -452,7 +452,7 @@ export default class Bus{
     }
     snapshot(event, listener){
         var snapshot = {_isSnapshot:true}
-        _.extend(snapshot, _.clone(this))
+        _.extend(snapshot, this)
 
         snapshot.__proto__ = this.__proto__
 
@@ -479,7 +479,8 @@ export default class Bus{
     }
     clone(){
         var cloned = {_isSnapshot:true}
-        _.extend(cloned, _.clone(this))
+        //获取当前实例上的一切属性
+        _.extend(cloned, this)
 
         cloned.__proto__ = this.__proto__
 

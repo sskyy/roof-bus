@@ -35,8 +35,6 @@ class Runtime{
       if( data instanceof Facade){
         let obj = util.getRef( this, path)
         if( obj && util.isFunction( obj.destroy  )){
-          console.log("calling reset")
-          console.trace(new Error('aa'))
           obj.destroy()
         }
         //stop walking
