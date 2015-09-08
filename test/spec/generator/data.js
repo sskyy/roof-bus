@@ -1,15 +1,15 @@
-import Bus from "../../../src/generator"
-import assert from "assert"
-import co from 'co'
+var Bus = require("../../../lib/generator")
+var assert = require("assert")
+var co = require('co')
 
-  describe("listener fire mute",()=>{
+  describe("listener fire mute",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
       bus = new Bus
     })
 
@@ -29,14 +29,14 @@ import co from 'co'
         assert.equal(result.data.get(eventData.key), eventData.value)
         assert.equal(result.data.get(eventObjectData.key), eventObjectData.value)
 
-      }).then(r=>{
+      }).then(function(){
         done()
-      }).catch(e=>{
+      }).catch(function(e){
         done(e)
       })
     })
 
-    it("child data share", (done)=>{
+    it("child data share", function(done){
       var eventData = {key:"name",value:"jason"}
       var childDventData = {key:"name",value:"lopes"}
       var descendantEventData = {key:"name",value:"clark"}
@@ -75,16 +75,16 @@ import co from 'co'
 
         yield bus.fire(event)
 
-      }).then(()=>{
+      }).then(function(){
         done()
-      }).catch( e=>{
+      }).catch( function(e){
         console.trace(e)
         done("failed")
       })
     })
 
 
-    it("global data share", (done)=>{
+    it("global data share", function(done){
       var eventData = {key:"person1.name",value:"jason"}
       var childDventData = {key:"person2.name",value:"lopes"}
       var descendantEventData = {key:"person3.name",value:"clark"}

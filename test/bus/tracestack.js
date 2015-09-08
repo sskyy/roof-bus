@@ -7,18 +7,18 @@ var print = function( obj ){
 //TODO tracestack 测试！！！！
 
 module.exports = function( Bus ){
-  describe("error test",()=>{
+  describe("error test",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
       bus = new Bus
     })
 
-    it("expect to break the listener loop", (done)=> {
+    it("expect to break the listener loop", function(done) {
       var result = []
       var error = new Error("something wrong")
 
@@ -42,9 +42,9 @@ module.exports = function( Bus ){
       })
 
 
-      bus.fire(event).then(()=> {
+      bus.fire(event).then(function() {
         done("should not fire")
-      }).catch((err)=> {
+      }).catch(function(err) {
         print( bus._runtime.stack )
         try {
           assert.equal(result.join(""), "3")
@@ -57,7 +57,7 @@ module.exports = function( Bus ){
     })
 
 
-    it("expect to break the listener loop", (done)=> {
+    it("expect to break the listener loop", function(done) {
       var result = []
       var error = new Error("something wrong")
 
@@ -81,9 +81,9 @@ module.exports = function( Bus ){
       })
 
 
-      bus.fire(event).then(()=> {
+      bus.fire(event).then(function() {
         done("should not fire")
-      }).catch((err)=> {
+      }).catch(function(err) {
         try {
           assert.equal(result.join(""), "3")
           assert.equal(err.origin, error)
@@ -95,7 +95,7 @@ module.exports = function( Bus ){
     })
 
 
-    it("expect not effect parent listener loop", (done)=>{
+    it("expect not effect parent listener loop", function(done){
       var result = []
       var error = new Error("something wrong")
 
@@ -134,9 +134,9 @@ module.exports = function( Bus ){
         result.push(6)
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         done("should not fire")
-      }).catch((err)=>{
+      }).catch(function(err){
         try{
           assert.equal( result.join(""), "34521")
           assert.equal(err.origin, error)
@@ -149,7 +149,7 @@ module.exports = function( Bus ){
     })
 
 
-    it("expect error stack correct with BusError", (done)=>{
+    it("expect error stack correct with BusError", function(done){
       var result = []
       var errorData = {message:"custom error message"}
       var errorCode = 404
@@ -189,9 +189,9 @@ module.exports = function( Bus ){
         result.push(6)
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         done("should not fire")
-      }).catch((err)=>{
+      }).catch(function(err){
         try{
           //console.log( err.stack)
           assert.equal( result.join(""), "34521")

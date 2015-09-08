@@ -1,18 +1,18 @@
-import assert from "assert"
+var  assert = require("assert")
 
 module.exports = function( Bus ){
-  describe("listener fire mute",()=>{
+  describe("listener fire mute",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
       bus = new Bus
     })
 
-    it("disable as expect", (done)=>{
+    it("disable as expect", function(done){
       var result = []
       bus.on( event, function firstListener(){
         result.push(1)
@@ -32,31 +32,31 @@ module.exports = function( Bus ){
         disable : "secondListener"
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         assert.equal(result.join(""),"31")
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log(err)
         done(err)
       })
     })
 
-    it("disable in fire", (done)=>{
+    it("disable in fire", function(done){
       var result = []
       bus.on( event, function firstListener(){
         result.push(1)
       })
 
-      bus.fire({name:event,disable:"firstListener"}).then(()=>{
+      bus.fire({name:event,disable:"firstListener"}).then(function(){
         assert.equal(result.join(""),"")
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log(err)
         done(err)
       })
     })
 
-    it("disable in child stack", (done)=>{
+    it("disable in child stack", function(done){
       var childListenerFired = false
       var childListenerFired2 = false
       var childListenerFired3 = false
@@ -76,19 +76,19 @@ module.exports = function( Bus ){
         childListenerFired3 = true
       })
 
-      bus.fire({name:event}).then(()=>{
+      bus.fire({name:event}).then(function(){
         assert.equal( childListenerFired, false)
         assert.equal( childListenerFired2, true)
         assert.equal( childListenerFired3, false)
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log(err)
         done(err)
       })
     })
 
 
-    it("disable on the run", (done)=>{
+    it("disable on the run", function(done){
       var result = []
       bus.on( event, function firstListener(){
         result.push(1)
@@ -111,10 +111,10 @@ module.exports = function( Bus ){
         first: true
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         assert.equal(result.join(""),"32")
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log(err)
         done(err)
       })

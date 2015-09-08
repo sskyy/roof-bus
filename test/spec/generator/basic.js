@@ -1,4 +1,4 @@
-import Bus from "../../../src/generator.js"
-import Tpl from "../../bus/basic.js"
+var  Bus =require("../../../lib/generator.js")
+var Tpl = require("../../bus/basic.js")
 Tpl(Bus)
 

@@ -10,8 +10,7 @@
     "test": "mocha --compilers js:babel/register ./test/spec/*",
     "testone": "mocha --compilers js:babel/register",
     "testbus": "mocha --compilers js:babel/register ./test/bus",
-    "testlib": "mocha --compilers js:babel/register ./test/lib",
-    "compile": "babel src --out-dir lib"
+    "testlib": "mocha --compilers js:babel/register ./test/lib"
   },
   "keywords": [
     "event"
@@ -19,12 +18,8 @@
   "author": "sskyy",
   "license": "MIT",
   "devDependencies": {
-    "babel": "~5.6.14",
-    "babel-core": "~5.4.7",
-    "babel-loader": "~5.1.3",
     "mocha": "^2.2.5",
     "node-libs-browser": "~0.5.2",
-    "pre-commit": "~1.0.7",
     "prettyjson": "~1.1.1",
     "webpack": "~1.9.10",
     "webpack-dev-server": "~1.9.0"
@@ -32,11 +27,10 @@
   "dependencies": {
     "babel-runtime": "~5.8.20",
     "co": "~4.5.4",
+    "core-js": "^1.1.3",
     "lodash.clonedeep": "~3.0.1",
     "lodash.merge": "~3.3.1",
-    "lodash.uniq": "~3.2.1"
-  },
-  "pre-commit": [
-    "compile"
-  ]
+    "lodash.uniq": "~3.2.1",
+    "regenerator": "~0.8.36"
+  }
 }

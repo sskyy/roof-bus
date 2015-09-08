@@ -1,23 +1,23 @@
-import Bus from "../../../src/generator"
-import assert from "assert"
+var Bus = require( "../../../lib/generator")
+var assert = require( "assert")
 
-describe("waitFor",()=> {
+describe("waitFor",function() {
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=> {
+    beforeEach(function() {
         bus = new Bus
     })
 
 
-    it("waitFor with no aysnc signal", (done)=>{
+    it("waitFor with no aysnc signal", function(done){
         var result = []
         bus.on( event, function firstListener(){
-            return new Promise((resolve,reject)=>{
-                setTimeout(()=>{
+            return new Promise(function(resolve,reject){
+                setTimeout(function(){
                     console.log("pushing data")
                     result.push(1)
                     resolve()
@@ -38,21 +38,22 @@ describe("waitFor",()=> {
             }
         })
 
-        bus.fire(event).then(()=>{
+        bus.fire(event).then(function(){
             assert.equal(result.join(""),"132")
             done()
-        }).catch((err)=>{
+        }).catch(function(err)
+        {
             done(err)
         })
     })
 
     return
-    it("blockFor as expect", (done)=>{
+    it("blockFor as expect", function(done){
         var result = []
         bus.on( event,{
             fn: function firstListener(){
-                return new Promise((resolve,reject)=>{
-                    setTimeout(()=>{
+                return new Promise(function(resolve,reject){
+                    setTimeout(function(){
                         console.log("pushing data")
                         result.push(1)
                         resolve()
@@ -74,21 +75,21 @@ describe("waitFor",()=> {
             }
         })
 
-        bus.fire(event).then(()=>{
+        bus.fire(event).then(function(){
             assert.equal(result.join(""),"312")
             done()
-        }).catch((err)=>{
+        }).catch(function(err){
             console.log(err)
             done(err)
         })
     })
 
-    it("blockFor as return signal", (done)=>{
+    it("blockFor as return signal", function(done){
         var result = []
         bus.on( event,{
             fn: function firstListener(){
-                return this.result(new Promise((resolve,reject)=>{
-                    setTimeout(()=>{
+                return this.result(new Promise(function(resolve,reject){
+                    setTimeout(function(){
                         result.push(1)
                         resolve()
                     },500)
@@ -110,10 +111,10 @@ describe("waitFor",()=> {
             }
         })
 
-        bus.fire(event).then(()=>{
+        bus.fire(event).then(function(){
             assert.equal(result.join(""),"312")
             done()
-        }).catch((err)=>{
+        }).catch(function(err){
             console.log(err)
             done(err)
         })

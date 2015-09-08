@@ -1,4 +1,4 @@
-import Bus from "../../../src/index"
+import Bus from "../../../lib/index"
 import Tpl from "../../bus/basic.js"
 Tpl(Bus)
 

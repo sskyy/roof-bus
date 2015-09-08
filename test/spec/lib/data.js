@@ -1,15 +1,17 @@
-import Data from  "../../../src/data.js"
-import assert from "assert"
+'use strict'
+
+var  Data =require("../../../lib/data.js")
+var assert = require("assert")
 
 
-describe("data", ()=>{
+describe("data", function(){
   var data
 
-  beforeEach(()=>{
+  beforeEach(function(){
     data = new Data
   })
 
-  it("set and get from current",()=>{
+  it("set and get from current", function(){
     var testData = {
       "name" : "json",
       "person.age" : "21",
@@ -26,7 +28,7 @@ describe("data", ()=>{
     }
   })
 
-  it("set and get from child",()=>{
+  it("set and get from child",function(){
     var childData = data.child()
 
     var testData = {
@@ -45,7 +47,7 @@ describe("data", ()=>{
     }
   })
 
-  it("set and get global data",()=>{
+  it("set and get global data",function(){
     var childData = data.child()
 
     var testData = {

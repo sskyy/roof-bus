@@ -1,17 +1,17 @@
-import Bus from "../../../src/generator"
-import assert from "assert"
+var Bus = require("../../../lib/generator")
+var assert = require("assert")
 
-describe("error test",()=>{
+describe("error test",function(){
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
         bus = new Bus
     })
 
-    it("expect to break the listener loop", (done)=> {
+    it("expect to break the listener loop", function(done) {
         var result = []
         var error = new Error("something wrong")
 
@@ -35,9 +35,9 @@ describe("error test",()=>{
         })
 
 
-        bus.fire(event).then(()=> {
+        bus.fire(event).then(function() {
             done("should not fire")
-        }).catch((err)=> {
+        }).catch(function(err){
             try {
                 assert.equal(result.join(""), "3")
                 assert.equal(err.origin, error)
@@ -49,7 +49,7 @@ describe("error test",()=>{
     })
 
 
-    it("expect to break the listener loop too", (done)=> {
+    it("expect to break the listener loop too", function(done){
         var result = []
         var error = new Error("something wrong")
 
@@ -73,9 +73,9 @@ describe("error test",()=>{
         })
 
 
-        bus.fire(event).then(()=> {
+        bus.fire(event).then(function() {
             done("should not fire")
-        }).catch((err)=> {
+        }).catch(function(err){
             console.log( err )
             try {
                 assert.equal(result.join(""), "3")
@@ -89,7 +89,7 @@ describe("error test",()=>{
     })
 
 
-    it("expect to break the listener loop", (done)=> {
+    it("expect to break the listener loop", function(done){
         var result = []
         var error = new Error("something wrong")
 
@@ -113,9 +113,9 @@ describe("error test",()=>{
         })
 
 
-        bus.fire(event).then(()=> {
+        bus.fire(event).then(function() {
             done("should not fire")
-        }).catch((err)=> {
+        }).catch(function(err){
             try {
                 assert.equal(result.join(""), "3")
                 assert.equal(err.origin, error)
@@ -127,7 +127,7 @@ describe("error test",()=>{
     })
 
 
-    it("expect error break all stack", (done)=>{
+    it("expect error break all stack", function(done){
         var result = []
         var error = new Error("something wrong")
 
@@ -166,9 +166,9 @@ describe("error test",()=>{
             result.push(6)
         })
 
-        bus.fire(event).then(()=>{
+        bus.fire(event).then(function(){
             done("should not fire")
-        }).catch((err)=>{
+        }).catch(function(err){
             try{
                 assert.equal( result.join(""), "345")
                 assert.equal(err.origin, error)
@@ -181,7 +181,7 @@ describe("error test",()=>{
     })
 
 
-    it("expect error stack correct with BusError", (done)=>{
+    it("expect error stack correct with BusError", function(done){
         var result = []
         var errorData = {message:"custom error message"}
         var errorCode = 404
@@ -221,9 +221,9 @@ describe("error test",()=>{
             result.push(6)
         })
 
-        bus.fire(event).then(()=>{
+        bus.fire(event).then(function(){
             done("should not fire")
-        }).catch((err)=>{
+        }).catch(function(err){
             try{
                 assert.equal( result.join(""), "345")
                 assert.equal(err.data, errorData)
