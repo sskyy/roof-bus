@@ -417,7 +417,7 @@ export default class Bus{
 
         //任何执行期的错误，打断当前循环，并且使promise reject
         if(err){
-          debug.error( err )
+          //debug.error( err )
           return reject( err )
         }
 
