@@ -31,6 +31,6 @@
     "lodash.clonedeep": "~3.0.1",
     "lodash.merge": "~3.3.1",
     "lodash.uniq": "~3.2.1",
-    "regenerator": "~0.8.36"
+    "regenerator": "^0.8.38"
   }
 }
