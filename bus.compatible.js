@@ -1,4 +1,4 @@
 'use strict';
 
-require('regenerator/runtime');
+require('babel/node_modules/babel-core/node_modules/regenerator/runtime');
 module.exports = require('./lib/generator');
