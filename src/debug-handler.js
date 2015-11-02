@@ -30,6 +30,9 @@ var handlers = {
                         redConsole("stack : %s",arg.stack.join("\n"))
 
                         console.groupEnd()
+                        //仍然把原始错误抛出来，保障能调试
+                        console.error.call(console, arg.origin)
+
                     }else{
                         console.error.call(console, arg)
                     }

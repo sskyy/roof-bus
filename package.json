@@ -1,6 +1,6 @@
 {
   "name": "roof-bus",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "roof bus library",
   "main": "./lib/index.js",
   "directories": {
@@ -32,6 +32,7 @@
   "dependencies": {
     "babel-runtime": "~5.8.20",
     "co": "~4.5.4",
+    "lodash": "~3.10.1",
     "lodash.clonedeep": "~3.0.1",
     "lodash.merge": "~3.3.1",
     "lodash.uniq": "~3.2.1"

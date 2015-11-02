@@ -235,6 +235,18 @@ import assert from "assert"
       })
     })
 
+    it('can use catch without then', (done)=>{
+
+      bus.on('test', function(){
+        throw new Error('nothing')
+      })
+
+      bus.fire('test').catch(e=>{
+        console.error(e)
+        done()
+      })
+    })
+
 
   })
 

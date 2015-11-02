@@ -118,6 +118,25 @@ import assert from "assert"
         done(err)
       })
     })
+
+    it('before a non-exist listener should throw error', ()=>{
+      var error = null
+      bus.on('test', function one(){})
+
+      bus.on('test', {
+        fn : function(){},
+        before : 'two'
+      })
+
+      try{
+        bus.fire('test')
+      }catch(e){
+        console.error(e)
+        error = e
+      }
+
+      assert.notEqual(error, null)
+    })
   })
 
 

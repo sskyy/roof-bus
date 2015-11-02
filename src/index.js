@@ -263,7 +263,12 @@ export default class Bus{
 
   findListenersForEvent( eventName ){
     // 找到所有匹配的event，字符串和正则
-    var listeners = this._eventListenerMap.get( eventName ) ? this._eventListenerMap.get( eventName ).clone() : new OrderedList
+    try{
+      var listeners = this._eventListenerMap.get( eventName ) ? this._eventListenerMap.get( eventName ).clone() : new OrderedList
+    }catch(e){
+      debug.warn('Check your flow control attribute, you may specified before or after to a non-exist listener.')
+      throw e
+    }
 
 
     //获取所有匹配到的监听器，并且将正则监听器重新与字符串监听器排序
@@ -434,7 +439,9 @@ export default class Bus{
   bindThisToResolver(promise){
     var _then = promise.then
     promise.then = (...args)=>{
-      args = args.map( arg => { return arg.bind(this)})
+      args = args.map( arg => {
+        return (typeof arg === 'function') ? arg.bind(this) : arg
+      })
       return _then.call( promise, ...args)
     }
     return promise
