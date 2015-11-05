@@ -440,7 +440,9 @@ export default class Bus{
     bindThisToResolver(promise){
         var _then = promise.then
         promise.then = (...args)=>{
-            args = args.map( arg => { return arg.bind(this)})
+            args = args.map( arg => {
+                return typeof arg === 'function' ? arg.bind(this) : arg
+            })
             return _then.call( promise, ...args)
         }
         return promise

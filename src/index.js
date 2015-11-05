@@ -300,6 +300,9 @@ export default class Bus{
       //异步阶段的错误在 result 中返回，除非开发者没有return相应的promise
       var results = {}
 
+      if( listeners.length === 0 ){
+        debug.warn('No listener found for event: ' + event.name + '. Did you misspell the event name?')
+      }
 
       listeners.forEachAsync((listener, next)=> {
         //target 和 disable 可以共存
@@ -422,7 +425,7 @@ export default class Bus{
 
         //任何执行期的错误，打断当前循环，并且使promise reject
         if(err){
-          //debug.error( err )
+          debug.error( err )
           return reject( err )
         }
 

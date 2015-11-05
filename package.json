@@ -1,6 +1,6 @@
 {
   "name": "roof-bus",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "roof bus library",
   "main": "./lib/index.js",
   "directories": {

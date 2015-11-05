@@ -90,6 +90,17 @@ module.exports = function( Bus ){
       }).catch(done)
     })
 
+    it('fire unRegister event should not throw error', (done)=>{
+      bus.fire('neverBeRegistered').then(function(){
+        done()
+      }).catch(done)
+    })
+
+    it('catch without then should not throw error', (done)=>{
+      bus.fire('neverBeRegistered').catch(done)
+      done()
+    })
+
 
   })
 }

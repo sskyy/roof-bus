@@ -257,7 +257,7 @@ class OrderedList {
         return callback(err)
       }
 
-      if( i !== undefined ){
+      if( i !== undefined&& i!==null ){
         try{
           handler(i.value, next.bind(null, i.next))
         }catch(e){
