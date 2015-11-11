@@ -6,7 +6,7 @@ roof-bus is a event bus for both practical programmers and application architect
 
 roof-bus is really easy to get start with, check the code below. I don't think it need any explaination.
 
-```
+```javascript
 var Bus = require('roof-bus')
 var bus = new Bus
 
@@ -23,7 +23,7 @@ With roof-node, you can do it easily. Say that we have two listeners in differen
 
 start-something.js:
 
-```
+```javascript
 module.exports = function(bus){
 	bus.on('start', function( owner ){
 		console.log(owner + 'started something')
@@ -33,7 +33,7 @@ module.exports = function(bus){
 
 validate-arguments.js:
 
-```
+```javascript
 module.exports = function(bus){
 	bus.on('start',{
 		fn: function(owner){
@@ -48,7 +48,7 @@ To put the validation listener to first place, simply change the listener to a o
 
 Sometime to describe complex business flow, listeners need to fire another event, like:
 
-```
+```javascript
 bus.on('process1', function(){
 	bus.fire('process2')
 })
@@ -57,7 +57,7 @@ bus.on('process1', function(){
 When the hierachy goes deep, it will be hard to figure out what exactly happend when top event fired. Don't worry, roof-bus generates a detailed tracestack every time. And some visualization tools have already been developed.
 
 ```
-图
+pic
 ```
 
 Read on for more usage, you may find more practical features.
@@ -68,7 +68,7 @@ Read on for more usage, you may find more practical features.
 ### 1. Simple `on` and `fire`.
 
 
-```
+```javascript
 var Bus = require('roof-bus')
 var bus = new Bus
 
@@ -83,7 +83,7 @@ bus.fire('start', 'argument1', 'argument2')
 
 Order of listeners on the same event can be controlled. Just name you listener function and then use the function name in attribute `before` or `after`.
 
-```
+```javascript
 bus.on('start', function listener1( arg1, arg2 ){
 	console.log('listener1 fired', arg1, arg2)
 })
@@ -100,7 +100,7 @@ bus.fire('start', 'argument1', 'argument2')
 
 There are four order control attributes: `before` `after` `first` `last`. Check below.
 
-```
+```javascript
 bus.on('start', function listener1( arg1, arg2 ){
 	console.log('listener1 fired', arg1, arg2)
 })
@@ -134,7 +134,7 @@ bus.fire('start', 'argument1', 'argument2')
 
 `fire` method always return a promise. If you have synchronous code in listener and want roof-bus wait for you, return a promise.
 
-```
+```javascript
 bus.on('start', function listener1( arg1, arg2 ){
 	return new Promise(function(resolve,reject){
 		setTimeout(resolve, 1000)
@@ -149,7 +149,7 @@ bus.fire('start', 'argument1', 'argument2').then(function(){
 
 **Note** that listeners are fired synchronously as default. So listener which returns promise will block followers until promise resolve.
 
-```
+```javascript
 bus.on('start', function listener1( arg1, arg2 ){
 	return new Promise(function(resolve,reject){
 		setTimeout(resolve, 1000)
@@ -173,7 +173,7 @@ bus.fire('start', 'argument1', 'argument2').then(function(){
 If you want some listeners to execute asynchronously, you can set `async` attribute to `true` as below. 
 
 
-```
+```javascript
 bus.on('start', {
 	fn: function listener1( arg1, arg2 ){
 		return new Promise(function(resolve,reject){
@@ -201,7 +201,7 @@ bus.fire('start', 'argument1', 'argument2').then(function(){
 
 Note the order of listeners is important when passing data.
 
-```
+```javascript
 bus.on('start', function listener1( arg1, arg2 ){
 	this.data.set('name','Bill')
 })
@@ -218,7 +218,7 @@ bus.on('start', {
 
 You can throw a build-in Error instance or use roof-bus `error` method.
 
-```
+```javascript
 bus.on('start', function listener1( arg1, arg2 ){
 	throw new Error('some error')
 	//or 
