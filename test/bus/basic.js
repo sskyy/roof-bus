@@ -1,16 +1,16 @@
-import assert from "assert"
+var assert = require("assert")
 
 
 module.exports = function( Bus ){
-  describe("add listener and fire",()=>{
+  describe("add listener and fire",function(){
     //return
     var bus
-    beforeEach((done)=>{
+    beforeEach(function(done){
       bus = new Bus
       done()
     })
 
-    it("add listener", ()=>{
+    it("add listener", function(){
       var event = "dance"
       bus.on( event, function firstListener( eventArg ){})
 
@@ -36,25 +36,27 @@ module.exports = function( Bus ){
       //assert.equal(bus._listenerStack.string[event].listeners[0].module.toString(), "")
     })
 
-    it("fire event",(done)=>{
+    it("fire event",function(done){
       var event = "sing"
       var arg =  ["lost+","start from bottom"]
       var fired = false
 
-      bus.on(event,function firstListener(...eventArg){
-        eventArg.forEach( (singleArg,i) =>{
+      bus.on(event,function firstListener(){
+        var eventArg = Array.prototype.slice.call(arguments, 0)
+        eventArg.forEach( function(singleArg,i){
           assert.equal( singleArg, arg[i])
         })
         fired = true
       })
 
-      bus.fire(event, ...arg).then(function(){
+
+      bus.fire.apply(bus, [event].concat(arg)).then(function(){
         assert.equal( fired, true)
         done()
       }).catch(done)
     })
 
-    it("fire event in a promise",(done)=>{
+    it("fire event in a promise",function(done){
 
       var event = "sing"
       var anotherEvent = "dance"
@@ -62,43 +64,35 @@ module.exports = function( Bus ){
       var firstFired = false
       var secondFired = false
 
-      bus.on(event,function firstListener(...eventArg){
-        eventArg.forEach( (singleArg,i) =>{
+      bus.on(event,function firstListener(){
+        var eventArg = Array.prototype.slice.call(arguments, 0)
+        eventArg.forEach( function(singleArg,i){
           assert.equal( singleArg, arg[i])
         })
 
+        var that = this
         firstFired = true
-        return new Promise((resolve, reject)=>{
+        return new Promise(function(resolve, reject){
           //不要忘记resolve
-          setTimeout(()=>{
-            this.fire(anotherEvent, ...eventArg).then(resolve).catch(reject)
+          setTimeout(function(){
+            that.fire.apply(that, [anotherEvent].concat(eventArg)).then(resolve).catch(reject)
           }, 100)
         })
       })
 
-      bus.on(anotherEvent, function sendListener(...eventArg){
+      bus.on(anotherEvent, function sendListener(){
+        var eventArg = Array.prototype.slice.call(arguments, 0)
         secondFired = true
-        eventArg.forEach( (singleArg,i) =>{
+        eventArg.forEach( function(singleArg,i){
           assert.equal( singleArg, arg[i])
         })
       })
 
-      bus.fire(event, ...arg).then(function(){
+      bus.fire.apply(bus,[event].concat( arg)).then(function(){
         assert.equal( firstFired, true)
         assert.equal( secondFired, true)
         done()
       }).catch(done)
-    })
-
-    it('fire unRegister event should not throw error', (done)=>{
-      bus.fire('neverBeRegistered').then(function(){
-        done()
-      }).catch(done)
-    })
-
-    it('catch without then should not throw error', (done)=>{
-      bus.fire('neverBeRegistered').catch(done)
-      done()
     })
 
 

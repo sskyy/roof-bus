@@ -1,23 +1,22 @@
-import Bus from "../../../src/generator"
-import assert from "assert"
-import prettyjson from "prettyjson"
+var Bus = require( "../../../lib/generator")
+var assert = require( "assert")
+var prettyjson = require( "prettyjson")
 var print = function( obj ){
     console.log( prettyjson.render(obj))
 }
 
-
-describe("tracestack test",()=>{
+describe("tracestack test",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
         bus = new Bus
     })
 
-    it("expect tracestack have right properties", (done)=>{
+    it("expect tracestack have right properties", function(done){
         var listenerResult = {a : 1}
         var listener = function firstListener(){
             return listenerResult
@@ -37,7 +36,7 @@ describe("tracestack test",()=>{
                 assert.equal( Object.keys(currentStack.listeners).length,  listeners.length)
 
                 var stackListenerNames = Object.keys(currentStack.listeners).sort().join(",")
-                var listenerNames = listeners.map(listener=>listener.name).sort().join(",")
+                var listenerNames = listeners.map(function(listener){return listener.name}).sort().join(",")
                 assert.equal( stackListenerNames,  listenerNames)
                 var stackListener = currentStack.listeners[listener.name]
                 assert.equal(stackListener.$class,'listener')
@@ -53,7 +52,6 @@ describe("tracestack test",()=>{
 
     })
 
-//TODO 补充
 
     //it("expect have right listener stack", (done)=> {
     //

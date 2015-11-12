@@ -1,4 +1,4 @@
-# roof-bus
+# Roof-bus
 
 roof-bus is a event bus for both practical programmers and application architects. It can be used as a simple string-based event bus whitout any buy-in in small apps. When handling large apps, especially the one with complex business logic, its powerful features like Listener Sequence Control can help you keep the system low-coupled and flexsible during the growth.
 
@@ -54,11 +54,13 @@ bus.on('process1', function(){
 })
 ```
 
-When the hierachy goes deep, it will be hard to figure out what exactly happend when top event fired. Don't worry, roof-bus generates a detailed tracestack every time. And some visualization tools have already been developed.
+When the hierachy goes deep, it will be hard to figure out what exactly happend when top event fired. Don't worry, roof-bus generates a detailed tracestack every time. And already been used in a web framework with amazing 
 
-```
-pic
-```
+
+<div style='text-align:center'>
+	<img src='https://t.alipayobjects.com/images/rmsweb/T1WINjXddXXXXXXXXX.png' width='80%' />
+</div>
+
 
 Read on for more usage, you may find more practical features.
 
@@ -197,7 +199,24 @@ bus.fire('start', 'argument1', 'argument2').then(function(){
 })
 ```
 
-### 4. Passing data between listeners
+### 4. Generator support
+
+If you have asynchrous code and do not like promise, you can use generator:
+
+```javascript
+bus.on('start', function *listener1(){
+	yield somethingAsync()
+})
+
+bus.on('start', {
+    fn: function listener2( arg1, arg2 ){
+        console.log('will be blocked by listener1')
+    },
+    after : ['listener1']
+})
+```
+
+### 5. Passing data between listeners
 
 Note the order of listeners is important when passing data.
 
@@ -214,7 +233,18 @@ bus.on('start', {
 })
 ```
 
-### 5. Error handling
+### 6. Fire inside listener
+
+You already we can fire another event inside listener, and roof-bus will keep a tracestack for you. Just keep one thing in mind that you must use `this.fire` inside the listener:
+
+```javascript
+bus.on('topEvent', function(){
+	this.fire('rootEvent')
+})
+
+```
+
+### 7. Error handling
 
 You can throw a build-in Error instance or use roof-bus `error` method.
 
@@ -235,6 +265,70 @@ bus.fire('start').then(function(){
 
 ## Advanced
 
-### list listeners
+### List events
 
-### listener tracestack
+It easy to get all registered events:
+
+```javascript
+bus.on('sing', function(){})
+bus.on('dance', function(){})
+
+var events = bus.getEvents()
+
+console.log( events )   //'sing' 'dance'
+```
+
+### List listeners
+
+Get all listeners for listened on certain event:
+
+```
+function listener1(){}
+function listener2(){}
+bus.on(event, listener1)
+bus.on(event, {
+	fn: listener2,
+	before : 'listener1'
+})
+
+var listeners = bus.getListeners(event).toArray()
+assert.equal( listeners[0].fn, listener2)
+assert.equal( listeners[0].event, event)
+assert.equal( listeners[1].fn, listener1)
+```
+
+
+
+### Get listener tracestack
+
+
+```
+bus.on('dance', function danceListener(){
+	this.data.set('name','Jane')
+})
+
+bus.fire('dance')
+
+console.log( bus._runtime.stack )
+```
+
+The tracestack structure:
+
+```
+[{
+	"event": {
+		"name": "dance",
+		"arguments": []
+	},
+	"listeners": {
+		"danceListener": {
+			"fn"    : [Function firstListener],
+			"event" : "dance",
+			"data"  :{
+				"name":"Jane"
+			}
+		}
+	}
+}]
+```
+Browse the test cases and examples for more detail. More documents coming soon.

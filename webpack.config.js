@@ -1,18 +1,16 @@
+var path = require('path')
 var webpack = require("webpack")
 module.exports = {
   entry : {
-    index:  "./src/index.js",
+    compatible:  "./bus.compatible.js",
   },
   output : {
-    path: __dirname,
+    path: path.join(__dirname,'./dist'),
     filename: "[name].js"
   },
   module: {
     loaders: [
       { test: /\.js?$/, exclude: /node_modules/, loader: "babel-loader"},
-      { test:/.less$/, loader : "style!css!less"},
-      { test:/.json/, loader : "file-loader"},
-      {test: /\.svg$/,loader: 'file-loader'}
     ]
   },
   plugins : [
@@ -21,7 +19,6 @@ module.exports = {
     })
   ],
   resolve: {
-    // you can now require('file') instead of require('file.js')
     extensions: ['', '.js', '.json']
   },
   debug: true

@@ -1,18 +1,18 @@
-import assert from "assert"
+var  assert =require("assert")
 
 module.exports = function(Bus){
-  describe("listener fire mute",()=>{
+  describe("listener fire mute",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
       bus = new Bus
     })
 
-    it("target as expect", (done)=>{
+    it("target as expect", function(done){
       var result = []
       bus.on( event, function firstListener(){
         result.push(1)
@@ -31,16 +31,16 @@ module.exports = function(Bus){
         first: true,
       })
 
-      bus.fire({name:event,target:"secondListener"}).then(()=>{
+      bus.fire({name:event,target:"secondListener"}).then(function(){
         assert.equal(result.join(""),"2")
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log(err)
         done(err)
       })
     })
 
-    it("target multiple", (done)=>{
+    it("target multiple", function(done){
       var result = []
       bus.on( event, function firstListener(){
         result.push(1)
@@ -59,31 +59,31 @@ module.exports = function(Bus){
         first: true
       })
 
-      bus.fire({name:event,target:["secondListener","firstListener"]}).then(()=>{
+      bus.fire({name:event,target:["secondListener","firstListener"]}).then(function(){
         assert.equal(result.join(""),"21")
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log(err)
         done(err)
       })
     })
 
-    //it("disable in fire", (done)=>{
+    //it("disable in fire", function(done){
     //  var result = []
     //  bus.on( event, function firstListener(){
     //    result.push(1)
     //  })
     //
-    //  bus.fire({name:event,disable:"firstListener"}).then(()=>{
+    //  bus.fire({name:event,disable:"firstListener"}).then(function(){
     //    assert.equal(result.join(""),"")
     //    done()
-    //  }).catch((err)=>{
+    //  }).catch(function(err){
     //    console.log(err)
     //    done(err)
     //  })
     //})
     //
-    //it("disable in child stack", (done)=>{
+    //it("disable in child stack", function(done){
     //  var childListenerFired = false
     //  var childListenerFired2 = false
     //  var childListenerFired3 = false
@@ -103,12 +103,12 @@ module.exports = function(Bus){
     //    childListenerFired3 = true
     //  })
     //
-    //  bus.fire({name:event}).then(()=>{
+    //  bus.fire({name:event}).then(function(){
     //    assert.equal( childListenerFired, false)
     //    assert.equal( childListenerFired2, true)
     //    assert.equal( childListenerFired3, false)
     //    done()
-    //  }).catch((err)=>{
+    //  }).catch(function(err){
     //    console.log(err)
     //    done(err)
     //  })

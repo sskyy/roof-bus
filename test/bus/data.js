@@ -1,18 +1,18 @@
-import assert from "assert"
+var assert =  require(assert)
 
 module.exports = function( Bus ){
-  describe("listener fire mute",()=>{
+  describe("listener fire mute",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
       bus = new Bus
     })
 
-    it("child data share", (done)=>{
+    it("child data share", function(done){
       var eventData = {key:"name",value:"jason"}
       var childDventData = {key:"name",value:"lopes"}
       var descendantEventData = {key:"name",value:"clark"}
@@ -43,7 +43,7 @@ module.exports = function( Bus ){
         assert.equal( this.data.get(descendantEventData.key), descendantEventData.value)
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         done()
       }).catch((...arg)=>{
         console.log(arg)
@@ -52,7 +52,7 @@ module.exports = function( Bus ){
     })
 
 
-    it("global data share", (done)=>{
+    it("global data share", function(done){
       var eventData = {key:"person1.name",value:"jason"}
       var childDventData = {key:"person2.name",value:"lopes"}
       var descendantEventData = {key:"person3.name",value:"clark"}
@@ -92,7 +92,7 @@ module.exports = function( Bus ){
         //this 指针和bus相同
         assert.equal( this, bus )
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         done(err)
       })
     })

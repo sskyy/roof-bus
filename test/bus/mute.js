@@ -1,20 +1,20 @@
-import assert from "assert"
+var  assert =require("assert")
 
 
 
 module.exports = function( Bus ){
-  describe("listener fire mute",()=>{
+  describe("listener fire mute",function(){
     //return
     var bus
     var event = "dance"
     var childEvent = "sing"
     var descendantEvent = "shoot"
 
-    beforeEach(()=>{
+    beforeEach(function(){
       bus = new Bus
     })
 
-    it("fire as expect", (done)=>{
+    it("fire as expect", function(done){
       var result = []
       bus.on( event, function firstListener(){
         result.push(1)
@@ -43,17 +43,17 @@ module.exports = function( Bus ){
         result.push(5)
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         assert.equal(result.join(""),"34521")
         done()
-      }).catch((...arg)=>{
-        console.log(arg)
-        done(arg)
+      }).catch(function(err){
+        console.log(err)
+        done(err)
       })
     })
 
 
-    it("mute from listener",(done)=>{
+    it("mute from listener",function(done){
       var originListenerFired = false
       var childListenerFiredTimes = 0
 
@@ -73,20 +73,20 @@ module.exports = function( Bus ){
       })
 
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
 
         //只能mute后代
         assert.equal(originListenerFired,true)
         assert.equal(childListenerFiredTimes,1)
 
         done()
-      }).catch(err=>{
+      }).catch(function(err){
         console.log( "stack====>",err.stack)
         done(err)
       })
     })
 
-    it("mute from fire",(done)=>{
+    it("mute from fire",function(done){
 
       var childFired = false
       var descendantFired = false
@@ -107,18 +107,18 @@ module.exports = function( Bus ){
         descendantFired = true
       })
 
-      bus.fire({name:event,mute:descendantEvent}).then(()=>{
+      bus.fire({name:event,mute:descendantEvent}).then(function(){
         assert.equal(childFired,true)
         assert.equal(descendantFired,false)
         done()
-      }).catch((...arg)=>{
-        console.log(arg)
-        done(arg)
+      }).catch(function(err){
+        console.log(err)
+        done(err)
       })
     })
 
 
-    it("fire as expect", (done)=>{
+    it("fire as expect", function(done){
       bus.on( event, function firstListener( eventArg ){})
 
       bus.on( event,{
@@ -146,7 +146,7 @@ module.exports = function( Bus ){
       done()
     })
 
-    it("mute on the run",(done)=>{
+    it("mute on the run",function(done){
       var childFired = false
       var descendantFired = false
 
@@ -176,11 +176,11 @@ module.exports = function( Bus ){
         descendantFired = true
       })
 
-      bus.fire(event).then(()=>{
+      bus.fire(event).then(function(){
         assert.equal(childFired,true)
         assert.equal(descendantFired,false)
         done()
-      }).catch((err)=>{
+      }).catch(function(err){
         console.log("something run! ==>",err)
         done(err)
       })
