@@ -1,4 +1,5 @@
-# Roof-bus
+[![npm version](https://badge.fury.io/js/zero.png)](http://badge.fury.io/js/roof-bus)
+[![Build Status](https://travis-ci.org/sskyy/roof-bus.svg?branch=master)](https://travis-ci.org/sskyy/roof-bus)
 
 roof-bus is a event bus for both practical programmers and application architects. It can be used as a simple string-based event bus whitout any buy-in in small apps. When handling large apps, especially the one with complex business logic, its powerful features like Listener Sequence Control can help you keep the system low-coupled and flexsible during the growth.
 
