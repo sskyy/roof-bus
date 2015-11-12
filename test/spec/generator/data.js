@@ -37,7 +37,6 @@ describe("listener fire mute", function () {
   })
 
 
-  return
   it("child data share", function (done) {
     var eventData = {key: "name", value: "jason"}
     var childDventData = {key: "name", value: "lopes"}

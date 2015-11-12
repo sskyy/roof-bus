@@ -1,5 +1,5 @@
-import assert from "assert"
-import prettyjson from "prettyjson"
+var assert = require("assert")
+var prettyjson = require("prettyjson")
 var print = function( obj ){
   console.log( prettyjson.render(obj))
 }

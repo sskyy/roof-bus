@@ -1,14 +1,31 @@
 var  assert = require("assert")
 var  OrderedList = require("../../../lib/orderedList.js")
-var _ = require("lodash")
 
 function fill( array, value ){
   //value 为 undefined 时, 数组 map 会跳过
   if( value === undefined ) value = 1
-  for( var i in array ){
+  for( var i=0; i< array.length; i++ ){
     array[i] = value
   }
   return array
+}
+
+function findIndex( array, where){
+  var index = -1
+  for( var i in array ){
+    var allMatch = true
+    for( var key in where ){
+      if( where[key] !== array[i][key]){
+        allMatch = false
+        break
+      }
+    }
+    if( allMatch ){
+      index = i
+      break
+    }
+  }
+  return index
 }
 
 describe("orderedList test", function(){
@@ -103,7 +120,7 @@ describe("orderedList test", function(){
     var rawData = list.toArray()
     assert.equal( rawData[0].name , `${prefix}${firstIndex}` )
 
-    var sortedBeforeWhichIndex = _.findIndex(rawData,{name:`${prefix}${beforeWhichIndex}`})
+    var sortedBeforeWhichIndex = findIndex(rawData,{name:`${prefix}${beforeWhichIndex}`})
     assert.equal( rawData[sortedBeforeWhichIndex-1].name , `${prefix}${beforeIndex}` )
     assert.equal( rawData.length, data.length )
     assert.equal( list._waitList.size, 0 )

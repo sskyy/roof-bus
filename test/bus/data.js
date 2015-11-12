@@ -1,4 +1,4 @@
-import assert from "assert"
+var assert =  require(assert)
 
 module.exports = function( Bus ){
   describe("listener fire mute",function(){
