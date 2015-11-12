@@ -5,7 +5,6 @@ var print = function( obj ){
     console.log( prettyjson.render(obj))
 }
 
-
 describe("tracestack test",function(){
     //return
     var bus
@@ -53,7 +52,6 @@ describe("tracestack test",function(){
 
     })
 
-//TODO 补充
 
     //it("expect have right listener stack", (done)=> {
     //

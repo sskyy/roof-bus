@@ -203,7 +203,7 @@ bus.fire('start', 'argument1', 'argument2').then(function(){
 
 If you have asynchrous code and do not like promise, you can use generator:
 
-```
+```javascript
 bus.on('start', function *listener1(){
 	yield somethingAsync()
 })
@@ -303,5 +303,32 @@ assert.equal( listeners[1].fn, listener1)
 
 
 ```
+bus.on('dance', function danceListener(){
+	this.data.set('name','Jane')
+})
+
+bus.fire('dance')
+
 console.log( bus._runtime.stack )
 ```
+
+The tracestack structure:
+
+```
+[{
+	"event": {
+		"name": "dance",
+		"arguments": []
+	},
+	"listeners": {
+		"danceListener": {
+			"fn"    : [Function firstListener],
+			"event" : "dance",
+			"data"  :{
+				"name":"Jane"
+			}
+		}
+	}
+}]
+```
+browse the test cases for more detail.
