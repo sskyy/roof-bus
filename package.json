@@ -1,7 +1,7 @@
 {
   "name": "roof-bus",
   "version": "0.1.5",
-  "description": "roof bus library",
+  "description": "Yet another event bus library.",
   "main": "./index.js",
   "directories": {
     "test": "test"
@@ -10,10 +10,11 @@
     "test": "mocha  ./test/spec/*",
     "testone": "mocha ",
     "testbus": "mocha  ./test/bus",
-    "testlib": "mocha  ./test/lib"
+    "testlib": "mocha  ./test/lib",
+    "lint": "eslint lib"
   },
   "keywords": [
-    "event"
+    "event bus"
   ],
   "author": "sskyy",
   "license": "MIT",
@@ -26,9 +27,16 @@
     "webpack": "~1.9.10"
   },
   "dependencies": {
+    "babel-eslint": "~4.1.5",
     "co": "~4.5.4",
+    "eslint": "~1.9.0",
+    "eslint-config-rackt": "1.0.0",
     "lodash.clonedeep": "~3.0.1",
     "lodash.merge": "~3.3.1",
-    "lodash.uniq": "~3.2.1"
-  }
+    "lodash.uniq": "~3.2.1",
+    "pre-commit": "~1.1.2"
+  },
+  "pre-commit": [
+    "lint"
+  ]
 }
