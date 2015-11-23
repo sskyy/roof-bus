@@ -1,5 +1,5 @@
 var assert = require("assert")
-var Namespace = require("../../../lib/namespace.js")
+var Namespace = require("../../../lib/Namespace.js")
 
 describe("string extend test", function(){
 

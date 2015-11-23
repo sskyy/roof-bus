@@ -1,5 +1,5 @@
 var  assert = require("assert")
-var  OrderedList = require("../../../lib/orderedList.js")
+var  OrderedList = require("../../../lib/OrderedList.js")
 
 function fill( array, value ){
   //value 为 undefined 时, 数组 map 会跳过

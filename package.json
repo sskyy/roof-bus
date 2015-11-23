@@ -1,6 +1,6 @@
 {
   "name": "roof-bus",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Yet another event bus library.",
   "main": "./index.js",
   "directories": {

@@ -91,7 +91,7 @@ describe('listener disable test', function () {
   })
 
 
-  it('disable on the run', function (done) {
+  it('disable on the fly', function (done) {
     const result = []
     bus.on(event, function firstListener() {
       result.push(1)
