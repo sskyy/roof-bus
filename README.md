@@ -200,6 +200,7 @@ bus.fire('start', 'argument1', 'argument2').then(function(){
 })
 ```
 
+
 ### 4. Generator support
 
 If you have asynchrous code and do not like promise, you can use generator:
@@ -310,13 +311,13 @@ bus.on('dance', function danceListener(){
 
 bus.fire('dance')
 
-console.log( bus._runtime.stack )
+console.log( bus._runtime.data )
 ```
 
 The tracestack structure:
 
 ```
-[{
+{
 	"event": {
 		"name": "dance",
 		"arguments": []
@@ -330,6 +331,6 @@ The tracestack structure:
 			}
 		}
 	}
-}]
+}
 ```
 Browse the test cases and examples for more detail. More documents coming soon.
