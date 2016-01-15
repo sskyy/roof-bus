@@ -59,6 +59,8 @@ class Facade{
     this.ctor = ctor
     this.args = args
   }
+  fixIE8(){
+  }
 }
 
 export {Runtime,Facade}
