@@ -284,7 +284,7 @@ console.log( events )   //'sing' 'dance'
 
 Get all listeners for listened on certain event:
 
-```
+```javascript
 function listener1(){}
 function listener2(){}
 bus.on(event, listener1)
@@ -304,7 +304,7 @@ assert.equal( listeners[1].fn, listener1)
 ### Get listener tracestack
 
 
-```
+```javascript
 bus.on('dance', function danceListener(){
 	this.data.set('name','Jane')
 })
@@ -316,7 +316,7 @@ console.log( bus._runtime.data )
 
 The tracestack structure:
 
-```
+```javascript
 {
 	"event": {
 		"name": "dance",
